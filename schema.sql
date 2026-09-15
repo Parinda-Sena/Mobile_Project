@@ -5,6 +5,13 @@ PRAGMA foreign_keys = ON;
 CREATE TABLE category (
     category_id INTEGER PRIMARY KEY AUTOINCREMENT,
     category_name TEXT NOT NULL
+
+    -- เพิ่มข้อมูลหมวดหมู่
+INSERT OR IGNORE INTO category (category_id,category_name) VALUE
+(A001,Dessert),
+(A002,Beverage),
+(A003,Main Course),
+(A004,Appetizers);
 );
 
 -- menu เก็บเมนูอาหารและราคาปัจจุบัน
@@ -14,6 +21,14 @@ CREATE TABLE menu (
     price INTEGER NOT NULL CHECK (price >= 0),
     category_id INTEGER NOT NULL,
     FOREIGN KEY (category_id) REFERENCES category(category_id) ON DELETE RESTRICT
+
+     -- เพิ่มข้อมูลเมนู
+INSERT OR IGNORE INTO category (category_id,category_name) VALUE
+(A001,Dessert),
+(A002,Beverage),
+(A003,Main Course),
+(A004,Appetizers);
+);
 );
 
 -- table เก็บข้อมูลโต๊ะในร้าน
