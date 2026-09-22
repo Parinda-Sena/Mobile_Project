@@ -23,8 +23,8 @@ CREATE TABLE menu (
     FOREIGN KEY (category_id) REFERENCES category(category_id) ON DELETE RESTRICT
 
      -- เพิ่มข้อมูลเมนู
-INSERT OR IGNORE INTO category (category_id,category_name) VALUE
-(A001,Dessert),
+INSERT OR IGNORE INTO menu (menu_id,name,price,category_id) VALUE
+(B001,Dessert),
 (A002,Beverage),
 (A003,Main Course),
 (A004,Appetizers);
