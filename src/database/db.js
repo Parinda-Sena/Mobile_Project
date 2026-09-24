@@ -1,8 +1,5 @@
-import * as SQLite from 'expo-sqlite';
-
-const db = SQLite.openDatabaseSync('restaurant.db');
-
-export const initDatabase = async () => {
+export const DATABASE_NAME = 'my_restaurant.db';
+export const initDatabase = async (db) => {
   try {
     await db.execAsync('PRAGMA foreign_keys = ON;');
 
@@ -141,5 +138,3 @@ export const initDatabase = async () => {
     console.error('Database init error:', error);
   }
 };
-
-export default db;
