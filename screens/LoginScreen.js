@@ -1,17 +1,20 @@
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import {
-    Alert,
-    Button,
-    Text,
-    View,
+  Alert,
+  Button,
+  Text,
+  View,
 } from 'react-native';
 
 import Field from '../components/Field';
-import { loginUser } from '../db/database';
 import { appStyles } from '../styles/appStyles';
 
+const ADMIN_USERNAME = 'admin';
+const ADMIN_PASSWORD = 'admin123';
+
 const LoginScreen = ({ navigation }) => {
+
   const [form, setForm] = useState({
     username: '',
     password: '',
@@ -47,33 +50,27 @@ const LoginScreen = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleLogin = async () => {
+  const handleLogin = () => {
+
     if (!validate()) {
       return;
     }
 
-    try {
-      const user = await loginUser(
-        form.username.trim(),
-        form.password
-      );
+    const username = form.username.trim();
+    const password = form.password;
 
-      if (!user) {
-        Alert.alert(
-          'เข้าสู่ระบบไม่สำเร็จ',
-          'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
-        );
-        return;
-      }
+    if (
+      username === ADMIN_USERNAME &&
+      password === ADMIN_PASSWORD
+    ) {
 
       navigation.replace('Home');
 
-    } catch (error) {
-      console.error('Login error:', error);
+    } else {
 
       Alert.alert(
-        'เกิดข้อผิดพลาด',
-        'ไม่สามารถเข้าสู่ระบบได้'
+        'เข้าสู่ระบบไม่สำเร็จ',
+        'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
       );
     }
   };
@@ -90,7 +87,9 @@ const LoginScreen = ({ navigation }) => {
         placeholder="กรอกชื่อผู้ใช้"
         autoCapitalize="none"
         value={form.username}
-        onChangeText={(v) => setField('username', v)}
+        onChangeText={(v) =>
+          setField('username', v)
+        }
         error={errors.username}
       />
 
@@ -100,7 +99,9 @@ const LoginScreen = ({ navigation }) => {
         secureTextEntry
         autoCapitalize="none"
         value={form.password}
-        onChangeText={(v) => setField('password', v)}
+        onChangeText={(v) =>
+          setField('password', v)
+        }
         error={errors.password}
       />
 
