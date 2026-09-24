@@ -1,58 +1,54 @@
 import React, { useState } from 'react';
-import {View,Text,TouchableOpacity,StyleSheet,StatusBar,Platform,} from 'react-native';
-import AppetizerScreen from './Screens/Menu/AppetizerScreen';
-import colors from './styles/colors';
+import {View,Text,TouchableOpacity,StyleSheet,Alert,StatusBar,} from 'react-native';
+import HomeScreen from './Screens/HomeScreen';
 
+const colors = {
+  bg: '#FBF9F5',
+  card: '#FFFFFF',
+  border: '#E6DFD5',
+  text: '#3D3731',
+  dim: '#8C827A',
+  cyan: '#A0826C',
+};
 export default function App() {
-  const [screen, setScreen] = useState('welcome');
-  const [activeTab, setActiveTab] = useState('home');
-
-  if (screen === 'welcome') {
+  const [isStarted, setIsStarted] = useState(false);
+  if (!isStarted) {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={colors.bg}/>
-        <WelcomeScreen onStart={() => setScreen('main')} />
+        <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
+        <TouchableOpacity style={styles.staffButton} activeOpacity={0.7} 
+          onPress={() => { Alert.alert( 'Staff Login', 'หน้าสำหรับพนักงานเข้าสู่ระบบ' ); }} >
+          <Text style={styles.staffIcon}>☰</Text>
+        </TouchableOpacity>
+         <View style={styles.centerContent}>
+          <Text style={styles.welcomeText}> Welcome to meow restaurant </Text>
+          <Text style={styles.subtitle}> Click to start </Text>
+           <TouchableOpacity style={styles.startButton} activeOpacity={0.7} onPress={() => { setIsStarted(true); }} > 
+            <Text style={styles.startText}> Start </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
-  return (
+   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.bg}/>
-      <View style={styles.content}>{activeTab === 'home' && (
-      <HomeScreen onCategoryPress={(category) => { setScreen(category); }}/>)}
-        {activeTab === 'favorite' && (<FavoriteScreen /> )}
-        {activeTab === 'cart' && (<CartScreen /> )}
-        {screen === 'appetizer' && (<AppetizerScreen />)}
-        {screen === 'mainCourse' && (<MainCourseScreen />)}
-        {screen === 'dessert' && (<DessertScreen />  )}
-        {screen === 'drink' && (<DrinkScreen />)}
-      </View>
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNavigation}>
-        <TouchableOpacity style={styles.navItem} onPress={() => {
-            setActiveTab('home'); setScreen('main'); }} >
-          <Text style={[styles.navIcon,activeTab === 'home' &&styles.activeNavIcon,]}>⌂</Text>
-          <Text style={[styles.navText, activeTab === 'home' &&styles.activeNavText,]}>หน้าหลัก</Text></TouchableOpacity>        
-          <TouchableOpacity style={styles.navItem} onPress={() => { setActiveTab('favorite'); setScreen('main');}}> 
-          <Text style={[styles.navIcon,activeTab === 'favorite' && styles.activeNavIcon,]}> ♡</Text>
-          <Text style={[ styles.navText,activeTab === 'favorite' &&styles.activeNavText,]} >Favorite</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => {setActiveTab('cart');
-            setScreen('main'); }}>
-          <Text style={[styles.navIcon,activeTab === 'cart' && styles.activeNavIcon,]}> 🛒</Text>
-          <Text style={[styles.navText,activeTab === 'cart' && styles.activeNavText,]}>ตะกร้า</Text>
-        </TouchableOpacity>
-      </View>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
+      <HomeScreen onCategoryPress={(category) => { console.log('Selected category:', category); }} />
     </View>
   );
 }
 const styles = StyleSheet.create({
-  container: {flex: 1,backgroundColor: colors.bg,paddingTop: Platform.OS === 'android'? StatusBar.currentHeight : 44,},
-  content: {flex: 1,},
-  bottomNavigation: {height: 75,backgroundColor: colors.card,borderTopWidth: 1,borderTopColor: colors.border,
-  flexDirection: 'row',justifyContent: 'space-around',alignItems: 'center',},
-  navItem: {flex: 1,alignItems: 'center',justifyContent: 'center',},
-  navIcon: {fontSize: 23,color: colors.dim,marginBottom: 3,},
-  activeNavIcon: {color: colors.cyan,},
-  navText: {fontSize: 12,color: colors.dim,},
-  activeNavText: {color: colors.cyan,fontWeight: '700',},
+  container: {flex: 1,backgroundColor: colors.bg,},
+  staffButton: {position: 'absolute', top: 16,right: 24,width: 48,height: 48,
+    borderRadius: 24,backgroundColor: colors.card,borderWidth: 1,
+    borderColor: colors.border,justifyContent: 'center',alignItems: 'center',
+    zIndex: 100,elevation: 5,},
+  staffIcon: {fontSize: 20,color: colors.cyan,},
+  centerContent: {flex: 1,justifyContent: 'center',alignItems: 'center',paddingHorizontal: 30,},
+  welcomeText: {fontSize: 42,fontWeight: '700',color: colors.text,marginBottom: 8,textAlign: 'center',},
+  subtitle: {fontSize: 15,color: colors.dim,marginBottom: 35,},
+  startButton: {width: 180,height: 52,borderRadius: 26,backgroundColor: colors.cyan,
+    justifyContent: 'center',alignItems: 'center',elevation: 3,},
+  startText: {fontSize: 18,fontWeight: '700',color: colors.card,},
+
 });
