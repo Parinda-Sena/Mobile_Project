@@ -4,13 +4,6 @@ export const initDatabase = async (db) => {
     await db.execAsync('PRAGMA foreign_keys = ON;');
 
     await db.execAsync(`
-      DROP TABLE IF EXISTS order_item;
-      DROP TABLE IF EXISTS orders;
-      DROP TABLE IF EXISTS bills;
-      DROP TABLE IF EXISTS tables;
-      DROP TABLE IF EXISTS menu;
-      DROP TABLE IF EXISTS category;
-
       CREATE TABLE category (
         category_id TEXT PRIMARY KEY,
         category_name TEXT NOT NULL
@@ -41,6 +34,7 @@ export const initDatabase = async (db) => {
       ('D008', 'Brownie', 45, 'C001'),
       ('D009', 'Oreo Bingsu', 189, 'C001'),
       ('D010', 'Volcano Bingsu', 189, 'C001'),
+
       ('B001', 'Pure Matcha', 70, 'C002'),
       ('B002', 'Matcha Latte', 65, 'C002'),
       ('B003', 'Strawberry Fresh Milk', 55, 'C002'),
@@ -51,6 +45,7 @@ export const initDatabase = async (db) => {
       ('B008', 'Blue Hawaii', 50, 'C002'),
       ('B009', 'Latte', 55, 'C002'),
       ('B010', 'Cappucino', 60, 'C002'),
+
       ('M001', 'Ommlette on Rice', 40, 'C003'),
       ('M002', 'Tom Yum Goong', 150, 'C003'),
       ('M003', 'American Fried Rice', 70, 'C003'),
@@ -61,6 +56,7 @@ export const initDatabase = async (db) => {
       ('M008', 'Stir-Fried Basil with Minced Pork on Rice', 50, 'C003'),
       ('M009', 'Pork Fried Rice', 50, 'C003'),
       ('M010', 'Deep-Fried Seabass with Fish Sauce', 180, 'C003'),
+
       ('A001', 'Shrimp Donut', 49, 'C004'),
       ('A002', 'French Fries', 49, 'C004'),
       ('A003', 'Chicken Nuggets', 49, 'C004'),
@@ -125,7 +121,7 @@ export const initDatabase = async (db) => {
       );
 
       INSERT INTO order_item (order_item_id, order_id, menu_id, quantity, note, order_item_status, order_item_price) VALUES
-      ('F001', 'O001', 'B002', 2, NULL, 'pending', 130),
+      ('F001', 'O001', 'B002', 2, NULL, 'pending', 65),
       ('F002', 'O001', 'M005', 1, 'I like a medium rare.', 'pending', 89),
       ('F003', 'O001', 'M006', 1, 'I like a medium rare.', 'pending', 79);
 
@@ -133,7 +129,7 @@ export const initDatabase = async (db) => {
       CREATE INDEX IF NOT EXISTS idx_order_item_order_id ON order_item(order_id);
     `);
 
-    console.log('Database reset & initialized successfully');
+    console.log('Database initialized successfully');
   } catch (error) {
     console.error('Database init error:', error);
   }
