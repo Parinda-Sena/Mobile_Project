@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import * as SQLite from 'expo-sqlite';
+import { useSQLiteContext } from 'expo-sqlite';
 import colors from '../../../styles/Theme';
-const DATABASE_NAME = 'my_restaurant.db';
+import { getMenuItemsByCategory } from '../../../database/db';
+
 const MENU_ICONS = {
   'Chocolate Bingsu': '🍫',
   'Honey Toast': '🍞',
@@ -15,18 +16,20 @@ const MENU_ICONS = {
   'Oreo Bingsu': '🍨',
   'Volcano Bingsu': '🍰',
 };
+
 function DessertScreen({ onBack, onAddToCart }) {
+  const db = useSQLiteContext(); //ดึง db จาก Provider ส่วนกลาง
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     let isMounted = true;
+
     async function fetchMenu() {
       try {
-        const db = await SQLite.openDatabaseAsync(DATABASE_NAME);
-        const result = await db.getAllAsync(
-          'SELECT menu_id, name, price, category_id FROM menu WHERE category_id = ?',
-          ['C001']
-        );
+        //ดึงข้อมูล Dessert (category_id = 'C001') ผ่านฟังก์ชันกลาง
+        const result = await getMenuItemsByCategory(db, 'C001');
+
         if (isMounted) {
           setMenuItems(result);
         }
@@ -40,10 +43,12 @@ function DessertScreen({ onBack, onAddToCart }) {
     }
 
     fetchMenu();
+
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [db]);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -104,4 +109,5 @@ const styles = StyleSheet.create({
   addButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.cyan, justifyContent: 'center', alignItems: 'center' },
   addText: { color: colors.card, fontSize: 25, fontWeight: '500', lineHeight: 27 },
 });
+
 export default DessertScreen;
