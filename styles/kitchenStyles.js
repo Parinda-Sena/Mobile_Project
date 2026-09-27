@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors } from './theme';
+import { colors } from './Theme';
 
 export const kitchenStyles = StyleSheet.create({
   container: {
@@ -89,4 +89,19 @@ export const kitchenStyles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
   },
+ backBtn: {
+  height: 45,
+  justifyContent: 'center',
+  paddingHorizontal: 2,
+  paddingTop: 26,
+},
+
+backText: {
+  fontSize: 18,
+  color: colors.text,
+},
+
+list: {
+  flex: 1,
+},
 });
