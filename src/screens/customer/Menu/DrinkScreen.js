@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import * as SQLite from 'expo-sqlite';
+import { useSQLiteContext } from 'expo-sqlite'; 
 import colors from '../../../styles/Theme';
-
-const DATABASE_NAME = 'my_restaurant.db';
+import { getMenuItemsByCategory } from '../../../database/db'; 
 
 const MENU_ICONS = {
   'Pure Matcha': '🍵',
@@ -19,6 +18,7 @@ const MENU_ICONS = {
 };
 
 function DrinkScreen({ onBack, onAddToCart }) {
+  const db = useSQLiteContext();
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,13 +27,8 @@ function DrinkScreen({ onBack, onAddToCart }) {
 
     async function fetchMenu() {
       try {
-        const db = await SQLite.openDatabaseAsync(DATABASE_NAME);
-        
-        // ดึงเฉพาะเมนูที่เป็น Beverage (category_id = 'C002')
-        const result = await db.getAllAsync(
-          'SELECT menu_id, name, price, category_id FROM menu WHERE category_id = ?',
-          ['C002']
-        );
+        // 4. เรียกใช้ฟังก์ชันกลางสำหรับดึง Beverages (category_id = 'C002')
+        const result = await getMenuItemsByCategory(db, 'C002');
 
         if (isMounted) {
           setMenuItems(result);
@@ -52,7 +47,7 @@ function DrinkScreen({ onBack, onAddToCart }) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [db]);
 
   return (
     <View style={styles.container}>
