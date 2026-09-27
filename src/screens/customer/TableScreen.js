@@ -94,7 +94,7 @@ function TableScreen({ navigation }) {
                     !isAvailable && styles.unavailableText,
                   ]}
                 >
-                  {isAvailable ? 'Available' : 'Occupied'}
+                  {isAvailable ? 'Available' : 'unavailable'}
                 </Text>
               </TouchableOpacity>
             );
