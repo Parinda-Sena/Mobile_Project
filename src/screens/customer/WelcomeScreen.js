@@ -11,8 +11,8 @@ function WelcomeScreen({ navigation }) {
 
   // กดปุ่ม Start ไปหน้าหลักลูกค้า
   const handleStart = () => {
-    navigation.navigate('Home');
-  };
+  navigation.navigate('Table');
+};
 
   return (
     <View style={styles.container}>
