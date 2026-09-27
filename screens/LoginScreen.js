@@ -4,11 +4,12 @@ import {
   Alert,
   Button,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
-import Field from '../components/Field';
-import { appStyles } from '../styles/appStyles';
+import Field from '../../components/Field';
+import { appStyles } from '../../styles/appStyles';
 
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = 'admin123';
@@ -51,7 +52,6 @@ const LoginScreen = ({ navigation }) => {
   };
 
   const handleLogin = () => {
-
     if (!validate()) {
       return;
     }
@@ -59,15 +59,10 @@ const LoginScreen = ({ navigation }) => {
     const username = form.username.trim();
     const password = form.password;
 
-    if (
-      username === ADMIN_USERNAME &&
-      password === ADMIN_PASSWORD
-    ) {
-
-      navigation.replace('Home');
-
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      // เปลี่ยนจาก 'Home' (ที่เป็นของลูกค้า) เป็น 'KitchenHome' (ของหลังบ้าน)
+      navigation.replace('KitchenHome');
     } else {
-
       Alert.alert(
         'เข้าสู่ระบบไม่สำเร็จ',
         'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
@@ -77,6 +72,13 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <View style={appStyles.center}>
+
+      <TouchableOpacity
+      style={appStyles.backBtn}
+      onPress={() => navigation.navigate('Welcome')}
+      >
+      <Text style={appStyles.backText}>‹ Back</Text>
+      </TouchableOpacity>
 
       <Text style={appStyles.title}>
         เข้าสู่ระบบ
