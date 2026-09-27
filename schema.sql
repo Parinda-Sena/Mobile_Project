@@ -208,8 +208,8 @@ INSERT OR IGNORE INTO order_item
 ) VALUES
 
 ('F001', 'O001', 'B002', 2, NULL, 'pending', 65),
-('F002', 'O001', 'M005', 1, 'I like a medium rare.', 'pending', 89),
-('F003', 'O001', 'M006', 1, NULL, 'pending', 79);
+('F002', 'O002', 'M005', 1, 'I like a medium rare.', 'pending', 89),
+('F003', 'O003', 'M006', 1, NULL, 'pending', 79);
 
 -- INDEX
 
