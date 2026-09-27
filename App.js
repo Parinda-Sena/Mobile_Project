@@ -8,7 +8,7 @@ import LoginScreen from './src/screens/kitchen/LoginScreen';
 import KitchenHomeScreen from './src/screens/kitchen/KitchenHomeScreen'; 
 import HomeScreen from './src/screens/customer/HomeScreen';          
 
-// นำเข้าหน้าจอหลังบ้านเพิ่ม (เช็ค path ให้ตรงกับที่เก็บไฟล์จริงของคุณนะครับ)
+// นำเข้าหน้าจอหลังบ้าน
 import OrderListScreen from './src/screens/kitchen/OrderListScreen'; // 
 import StatusScreen from './src/screens/kitchen/StatusScreen';       // 
 import SalesSummaryScreen from './src/screens/kitchen/SalesSummaryScreen'; // 
