@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import * as SQLite from 'expo-sqlite';
+import { useSQLiteContext } from 'expo-sqlite'; // 1. นำเข้า useSQLiteContext แทน openDatabaseAsync
 import colors from '../../../styles/Theme';
-const DATABASE_NAME = 'my_restaurant.db';
+import { getMenuItemsByCategory } from '../../../database/db'; // 2. นำเข้าฟังก์ชันกลางจากโฟลเดอร์ db
 
 const MENU_ICONS = { 
   'Ommlette on Rice': '🍳',
@@ -18,6 +18,7 @@ const MENU_ICONS = {
 };
 
 function MainCourseScreen({ onBack, onAddToCart }) {
+  const db = useSQLiteContext(); // 3. ดึง db จาก Provider ส่วนกลาง
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,13 +27,8 @@ function MainCourseScreen({ onBack, onAddToCart }) {
 
     async function fetchMenu() {
       try {
-        const db = await SQLite.openDatabaseAsync(DATABASE_NAME);
-        
-        // ดึงเฉพาะเมนูที่เป็น Main Course (category_id = 'C003')
-        const result = await db.getAllAsync(
-          'SELECT menu_id, name, price, category_id FROM menu WHERE category_id = ?',
-          ['C003']
-        );
+        // 4. เรียกใช้ฟังก์ชันกลางสำหรับดึง Main Course (category_id = 'C003') โดยส่ง db เข้าไป
+        const result = await getMenuItemsByCategory(db, 'C003');
 
         if (isMounted) {
           setMenuItems(result);
@@ -51,7 +47,7 @@ function MainCourseScreen({ onBack, onAddToCart }) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [db]);
 
   return (
     <View style={styles.container}>
