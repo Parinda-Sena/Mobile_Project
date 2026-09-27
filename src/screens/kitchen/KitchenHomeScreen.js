@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar'; 
-import { useState } from 'react'; // เพิ่ม useState (ถ้าต้องการทำ Loading ตอนรีเซ็ต)
+import { useState } from 'react'; 
 import { 
     Alert, 
     Button, 
@@ -14,7 +14,7 @@ import { resetDatabase } from '../../database/db';
 const KitchenHomeScreen = ({ navigation }) => { 
   const db = useSQLiteContext(); // ดึงตัวแปร db มาใช้งาน
 
-  // 4. เพิ่มฟังก์ชันสำหรับกดล้างข้อมูล
+  //  เพิ่มฟังก์ชันสำหรับกดล้างข้อมูล
   const handleResetDatabase = async () => {
     Alert.alert(
       "ยืนยันการล้างข้อมูลร้าน",
@@ -67,7 +67,7 @@ const KitchenHomeScreen = ({ navigation }) => {
         onPress={() => navigation.navigate('SalesSummary')} 
       /> 
       
-      {/* 5. เพิ่มปุ่มล้างข้อมูลไว้ด้านล่างสุด */}
+      {/*  เพิ่มปุ่มล้างข้อมูลไว้ด้านล่างสุด */}
       <View style={styles.space} /> 
       <Button 
         title="ล้างข้อมูลฐานข้อมูล (Reset DB)" 
