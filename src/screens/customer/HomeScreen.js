@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {View,Text,TouchableOpacity,ScrollView,StyleSheet,TextInput,ActivityIndicator,} from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import colors from '../../styles/Theme';
-import { searchMenuItems } from '../../database/db'; 
+import { searchMenuItems, createOrder } from '../../database/db';
 import MainCourseScreen from './Menu/MainCourseScreen';
 import DrinkScreen from './Menu/DrinkScreen';
 import DessertScreen from './Menu/DessertScreen';
@@ -10,8 +10,9 @@ import AppetizerScreen from './Menu/AppetizerScreen';
 import CartScreen from './CartScreen'; 
 import ReceiptScreen from './ReceiptScreen';
 
-function HomeScreen({ navigation }) {
+function HomeScreen({ navigation, route }) {
   const db = useSQLiteContext(); 
+  const { tables_id, tables_number } = route.params || {};
   const [activeTab, setActiveTab] = useState('home');
   const [currentMenuScreen, setCurrentMenuScreen] = useState('none');
   const [cart, setCart] = useState([]);
@@ -19,6 +20,10 @@ function HomeScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  const handleStaffLogin = () => {
+    navigation.navigate('Login'); 
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -30,7 +35,6 @@ function HomeScreen({ navigation }) {
       }
       setIsSearching(true); 
       try {
-        // 4. เรียกใช้ฟังก์ชันกลางและส่ง db เข้าไป (ปลอดภัยเรื่องไม่เปิดซ้ำและไม่เขียน SQL ในหน้าจอ)
         const results = await searchMenuItems(db, searchQuery);
         if (isMounted) { 
           setSearchResults(results); 
@@ -79,10 +83,17 @@ function HomeScreen({ navigation }) {
     });
   };
 
-  const handleCheckout = (newOrder) => {
-    setOrders((prevOrders) => [...prevOrders, newOrder]);
-    setCart([]);
-  };  
+  const handleCheckout = async (newOrder) => {
+    try {
+      await createOrder(db, tables_id, cart);
+      setOrders((prevOrders) => [...prevOrders, newOrder]);
+      setCart([]);
+      console.log('บันทึก Order ลง SQLite สำเร็จ');
+    } catch (error) {
+      console.error('Checkout error:', error);
+      throw error;
+    }
+  };
 
   const handleClearAllOrders = () => {
     setOrders([]);
@@ -96,6 +107,8 @@ function HomeScreen({ navigation }) {
     if (navigation?.navigate) {
       navigation.navigate('Receipt', {
         orders: updatedOrders || orders,
+        tables_id,
+        tables_number,
         onClearAllOrders: handleClearAllOrders,
       });
     } else {
@@ -133,21 +146,37 @@ function HomeScreen({ navigation }) {
       <View style={styles.contentContainer}>
         {activeTab === 'home' && (
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} >
+            
+            {/* Header ส่วนหัวหน้าจอ */}
             <View style={styles.header}>
-              <View>
+              <View style={styles.headerTextContainer}>
                 <Text style={styles.smallTitle}>Welcome</Text>
                 <Text style={styles.title}>What would you like?</Text>
               </View>
-              <TouchableOpacity style={styles.profileButton} activeOpacity={0.8}>
-                <Text style={styles.profileIcon}>👤</Text>
+              
+              {/* ปุ่ม 3 ขีดสำหรับพนักงาน พร้อม hitSlop เพิ่มพื้นที่รับสัมผัส */}
+              <TouchableOpacity 
+                style={styles.staffButton} 
+                onPress={handleStaffLogin} 
+                activeOpacity={0.7}
+                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+              >
+                <Text style={styles.staffIcon}>☰</Text>
               </TouchableOpacity>
             </View>
 
+            {/* ช่องค้นหา */}
             <View style={styles.searchContainer}>
               <Text style={styles.searchIcon}>🔍</Text>
-              <TextInput style={styles.searchInput} placeholder="Search..." placeholderTextColor={colors.dim} value={searchQuery} onChangeText={setSearchQuery} />
+              <TextInput 
+                style={styles.searchInput} 
+                placeholder="Search..." 
+                placeholderTextColor={colors.dim} 
+                value={searchQuery} 
+                onChangeText={setSearchQuery} 
+              />
               {searchQuery.length > 0 && ( 
-                <TouchableOpacity onPress={() => setSearchQuery('')}> 
+                <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={10}> 
                   <Text style={styles.clearSearchText}>✕</Text> 
                 </TouchableOpacity> 
               )}
@@ -180,8 +209,12 @@ function HomeScreen({ navigation }) {
                 <Text style={styles.sectionTitle}>Menu Categories</Text>
                 <View style={styles.categoryContainer}>
                   {categories.map((item) => (
-                    <TouchableOpacity key={item.id} style={styles.categoryCard}
-                      activeOpacity={0.8} onPress={() => setCurrentMenuScreen(item.screen)} >
+                    <TouchableOpacity 
+                      key={item.id} 
+                      style={styles.categoryCard}
+                      activeOpacity={0.8} 
+                      onPress={() => setCurrentMenuScreen(item.screen)} 
+                    >
                       <View style={styles.iconBox}>
                         <Text style={styles.categoryIcon}>{item.icon}</Text>
                       </View>
@@ -208,10 +241,11 @@ function HomeScreen({ navigation }) {
         )}
       </View>
 
+      {/* แถบเมนูด้านล่าง */}
       <View style={styles.bottomTab}>
         <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => setActiveTab('home')}>
-          <Text style={[styles.tabIcon, activeTab === 'home' && styles.activeTabIcon]}> 🏠</Text>
-          <Text style={[styles.tabText, activeTab === 'home' && styles.activeTabText]}> Home </Text>
+          <Text style={[styles.tabIcon, activeTab === 'home' && styles.activeTabIcon]}>🏠</Text>
+          <Text style={[styles.tabText, activeTab === 'home' && styles.activeTabText]}>Home</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem} activeOpacity={0.7} onPress={() => setActiveTab('cart')}>
           <View>
@@ -232,41 +266,134 @@ function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   contentContainer: { flex: 1 },
-  header: { paddingBottom: 15, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  smallTitle: { fontSize: 14, color: colors.dim, marginBottom: 4 },
-  title: { fontSize: 25, fontWeight: '700', color: colors.text },
-  profileButton: { width: 45, height: 45, borderRadius: 23, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, justifyContent: 'center', alignItems: 'center' },
-  profileIcon: { fontSize: 20 },
-  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: 14, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14, height: 48, marginBottom: 20 },
+  scrollView: { flex: 1 },
+  content: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 30 },
+  
+  header: { 
+    paddingTop: 10, 
+    paddingBottom: 15, 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center' 
+  },
+  headerTextContainer: { flex: 1, marginRight: 15 },
+  smallTitle: { fontSize: 14, color: colors.dim, marginBottom: 4, fontWeight: '500' },
+  title: { fontSize: 24, fontWeight: '700', color: colors.text },
+  
+  /* จัดระเบียบปุ่ม 3 ขีดให้กดง่ายและสวยงาม */
+  staffButton: { 
+    width: 44, 
+    height: 44, 
+    borderRadius: 22, 
+    backgroundColor: colors.card, 
+    borderWidth: 1, 
+    borderColor: colors.border, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  staffIcon: { 
+    fontSize: 20, 
+    color: colors.text,
+    textAlign: 'center', 
+  },
+
+  searchContainer: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: colors.card, 
+    borderRadius: 14, 
+    borderWidth: 1, 
+    borderColor: colors.border, 
+    paddingHorizontal: 14, 
+    height: 48, 
+    marginBottom: 20 
+  },
   searchIcon: { fontSize: 18, marginRight: 10 },
   searchInput: { flex: 1, fontSize: 15, color: colors.text },
   clearSearchText: { fontSize: 16, color: colors.dim, paddingHorizontal: 5 },
+  
   searchResultsContainer: { gap: 12 },
-  menuCard: { minHeight: 80, backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 16, flexDirection: 'row', alignItems: 'center' },
-  menuInfo: { flex: 1 },  
+  menuCard: { 
+    minHeight: 80, 
+    backgroundColor: colors.card, 
+    borderRadius: 16, 
+    borderWidth: 1, 
+    borderColor: colors.border, 
+    padding: 16, 
+    flexDirection: 'row', 
+    alignItem: 'center' 
+  },
+  menuInfo: { flex: 1, justifyContent: 'center' },  
   menuName: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 4 },
   menuPrice: { fontSize: 15, fontWeight: '600', color: colors.cyan },
-  addButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.cyan, justifyContent: 'center', alignItems: 'center' },
+  addButton: { 
+    width: 36, 
+    height: 36, 
+    borderRadius: 18, 
+    backgroundColor: colors.cyan, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
   addText: { color: colors.card, fontSize: 22, fontWeight: '500', lineHeight: 24 },
   notFoundText: { textAlign: 'center', color: colors.dim, fontSize: 15, marginTop: 30 },
-  scrollView: { flex: 1 },
-  content: { paddingHorizontal: 24, paddingTop: 10, paddingBottom: 20 },
+  
   sectionTitle: { fontSize: 19, fontWeight: '700', color: colors.text, marginBottom: 16 },
   categoryContainer: { gap: 14 },
-  categoryCard: { minHeight: 100, backgroundColor: colors.card, borderRadius: 18, borderWidth: 1, borderColor: colors.border, padding: 16, flexDirection: 'row', alignItems: 'center' },
-  iconBox: { width: 62, height: 62, borderRadius: 16, backgroundColor: '#F3EEE7', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-  categoryIcon: { fontSize: 31 },
+  categoryCard: { 
+    minHeight: 95, 
+    backgroundColor: colors.card, 
+    borderRadius: 18, 
+    borderWidth: 1, 
+    borderColor: colors.border, 
+    padding: 14, 
+    flexDirection: 'row', 
+    alignItems: 'center' 
+  },
+  iconBox: { 
+    width: 58, 
+    height: 58, 
+    borderRadius: 15, 
+    backgroundColor: '#F3EEE7', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginRight: 15 
+  },
+  categoryIcon: { fontSize: 28 },
   categoryText: { flex: 1 },
   categoryTitle: { fontSize: 17, fontWeight: '700', color: colors.text, marginBottom: 4 },
   categorySubtitle: { fontSize: 13, color: colors.dim },
-  arrow: { fontSize: 30, color: colors.dim, fontWeight: '300' },
-  bottomTab: { flexDirection: 'row', height: 65, backgroundColor: colors.card, borderTopWidth: 1, borderColor: colors.border, paddingBottom: 5 },
+  arrow: { fontSize: 26, color: colors.dim, fontWeight: '300' },
+  
+  bottomTab: { 
+    flexDirection: 'row', 
+    height: 65, 
+    backgroundColor: colors.card, 
+    borderTopWidth: 1, 
+    borderColor: colors.border, 
+    paddingBottom: 5 
+  },
   tabItem: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   tabIcon: { fontSize: 22, opacity: 0.5 },
   activeTabIcon: { opacity: 1 },
   tabText: { fontSize: 12, color: colors.dim, marginTop: 2 },
   activeTabText: { color: colors.cyan, fontWeight: '700' },
-  badge: { position: 'absolute', right: -10, top: -4, backgroundColor: '#FF3B30', borderRadius: 10, minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 },
+  badge: { 
+    position: 'absolute', 
+    right: -10, 
+    top: -4, 
+    backgroundColor: '#FF3B30', 
+    borderRadius: 10, 
+    minWidth: 18, 
+    height: 18, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    paddingHorizontal: 4 
+  },
   badgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: 'bold' },
 });
 
