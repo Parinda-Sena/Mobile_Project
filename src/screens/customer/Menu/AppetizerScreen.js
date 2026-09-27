@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import * as SQLite from 'expo-sqlite';
+import { useSQLiteContext } from 'expo-sqlite'; // นำเข้า useSQLiteContext แทน openDatabaseAsync
 import colors from '../../../styles/Theme';
-const DATABASE_NAME = 'my_restaurant.db';
+import { getMenuItemsByCategory } from '../../../database/db'; // นำเข้าฟังก์ชันกลาง
+
 const MENU_ICONS = {
   'Shrimp Donut': '🍩',
   'French Fries': '🍟',
@@ -15,20 +16,39 @@ const MENU_ICONS = {
   'Spinach with Cheese': '🥬',
   'Lasagna': '🍝',
 };
+
 function AppetizerScreen({ onBack, onAddToCart }) {
+  const db = useSQLiteContext(); // ดึง db จาก Provider ส่วนกลาง
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  useEffect(() => {let isMounted = true; async function fetchMenu() {
-      try {const db = await SQLite.openDatabaseAsync(DATABASE_NAME);
-         const result = await db.getAllAsync('SELECT menu_id, name, price, category_id FROM menu WHERE category_id = ?',['C004']);
-        if (isMounted) {setMenuItems(result);}
+
+  useEffect(() => {
+    let isMounted = true; 
+
+    async function fetchMenu() {
+      try {
+        // ดึงข้อมูล Appetizers (category_id = 'C004') ผ่านฟังก์ชันกลาง
+        const result = await getMenuItemsByCategory(db, 'C004');
+
+        if (isMounted) {
+          setMenuItems(result);
+        }
       } catch (error) {
         console.error('Error loading appetizers:', error);
-      } finally {if (isMounted) {setLoading(false);}}
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     }
+
     fetchMenu();
-    return () => {isMounted = false;};
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [db]);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -40,8 +60,11 @@ function AppetizerScreen({ onBack, onAddToCart }) {
         <Text style={styles.title}>Appetizers</Text>
         <Text style={styles.subtitle}>อาหารเรียกน้ำย่อย</Text>
       </View>
-      {loading ? ( <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.cyan} /></View>
+
+      {loading ? ( 
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.cyan} />
+        </View>
       ) : (
         <ScrollView contentContainerStyle={styles.menuContainer} showsVerticalScrollIndicator={false}>
           {menuItems.map((item) => (
@@ -53,7 +76,11 @@ function AppetizerScreen({ onBack, onAddToCart }) {
                 <Text style={styles.menuName}>{item.name}</Text>
                 <Text style={styles.price}>{item.price} ฿</Text>
               </View>
-              <TouchableOpacity style={styles.addButton} activeOpacity={0.7} onPress={() => onAddToCart && onAddToCart(item)} >
+              <TouchableOpacity 
+                style={styles.addButton} 
+                activeOpacity={0.7} 
+                onPress={() => onAddToCart && onAddToCart(item)}
+              >
                 <Text style={styles.addText}>+</Text>
               </TouchableOpacity>
             </View>
