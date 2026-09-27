@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors } from './theme';
+import { colors } from './Theme';
 
 export const appStyles = StyleSheet.create({
   container: {
@@ -46,5 +46,16 @@ export const appStyles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
     marginBottom: 12,
+  },
+    backBtn: {
+    position: 'absolute',
+    top: 50,
+    left: 16,
+    zIndex: 10,
+  },
+
+  backText: {
+    fontSize: 18,
+    color: colors.text,
   },
 });
