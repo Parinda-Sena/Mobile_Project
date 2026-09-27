@@ -2,7 +2,7 @@
 PRAGMA foreign_keys = ON;
 
 -- category เก็บหมวดหมู่
-CREATE TABLE category (
+CREATE TABLE IF NOT EXISTS category (
     category_id TEXT PRIMARY KEY,
     category_name TEXT NOT NULL
 );
@@ -14,15 +14,26 @@ INSERT OR IGNORE INTO category (category_id, category_name) VALUES
 ('C004', 'Appetizers');
 
 -- menu เก็บเมนูอาหารและราคาปัจจุบัน
-CREATE TABLE menu (
+-- available = 1 มีของ / ขายได้
+-- available = 0 หมด / ปิดการขายชั่วคราว
+
+CREATE TABLE IF NOT EXISTS menu (
     menu_id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     price INTEGER NOT NULL CHECK (price >= 0),
     category_id TEXT NOT NULL,
-    FOREIGN KEY (category_id) REFERENCES category(category_id) ON DELETE RESTRICT
+
+    available INTEGER NOT NULL DEFAULT 1
+        CHECK (available IN (0, 1)),
+
+    FOREIGN KEY (category_id)
+        REFERENCES category(category_id)
+        ON DELETE RESTRICT
 );
 
-INSERT OR IGNORE INTO menu (menu_id, name, price, category_id) VALUES
+INSERT OR IGNORE INTO menu
+(menu_id, name, price, category_id) VALUES
+
 ('D001', 'Chocolate Bingsu', 189, 'C001'),
 ('D002', 'Honey Toast', 79, 'C001'),
 ('D003', 'Macarons', 45, 'C001'),
@@ -67,67 +78,151 @@ INSERT OR IGNORE INTO menu (menu_id, name, price, category_id) VALUES
 ('A009', 'Spinach with Cheese', 69, 'C004'),
 ('A010', 'Lasagna', 79, 'C004');
 
--- table เก็บข้อมูลโต๊ะในร้าน
-CREATE TABLE tables (
+-- tables เก็บข้อมูลโต๊ะในร้าน
+
+CREATE TABLE IF NOT EXISTS tables (
     tables_id TEXT PRIMARY KEY,
     tables_number TEXT NOT NULL UNIQUE,
-    tables_status TEXT NOT NULL DEFAULT 'available' CHECK (tables_status IN ('available', 'unavailable'))
+
+    tables_status TEXT NOT NULL DEFAULT 'available'
+        CHECK (
+            tables_status IN ('available', 'unavailable')
+        )
 );
 
-INSERT OR IGNORE INTO tables (tables_id, tables_number, tables_status) VALUES
+INSERT OR IGNORE INTO tables
+(tables_id, tables_number, tables_status) VALUES
+
 ('T001', '1', 'unavailable'),
 ('T002', '2', 'available'),
 ('T003', '3', 'unavailable'),
 ('T004', '4', 'available'),
-('T005', '5', 'available');
+('T005', '5', 'available'),
+('T006', '6', 'unavailable'),
+('T007', '7', 'available'),
+('T008', '8', 'unavailable'),
+('T009', '9', 'unavailable'),
+('T010', '10', 'unavailable'),
+('T011', '11', 'unavailable'),
+('T012', '12', 'available'),
+('T013', '13', 'available'),
+('T014', '14', 'available'),
+('T015', '15', 'unavailable');
 
 -- bills เก็บข้อมูลบิล
-CREATE TABLE bills (
+
+CREATE TABLE IF NOT EXISTS bills (
     bills_id TEXT PRIMARY KEY,
     tables_id TEXT NOT NULL,
-    bills_status TEXT NOT NULL DEFAULT 'open' CHECK (bills_status IN ('open', 'closed', 'cancel')),
+
+    bills_status TEXT NOT NULL DEFAULT 'open'
+        CHECK (
+            bills_status IN ('open', 'closed', 'cancel')
+        ),
+
     opened_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     closed_at TEXT,
-    FOREIGN KEY (tables_id) REFERENCES tables(tables_id) ON DELETE RESTRICT
+
+    FOREIGN KEY (tables_id)
+        REFERENCES tables(tables_id)
+        ON DELETE RESTRICT
 );
 
-INSERT OR IGNORE INTO bills (bills_id, tables_id, bills_status, opened_at, closed_at) VALUES
+INSERT OR IGNORE INTO bills
+(bills_id, tables_id, bills_status, opened_at, closed_at) VALUES
+
 ('S001', 'T001', 'open', '2026-09-24 11:15:00', NULL),
 ('S002', 'T003', 'open', '2026-09-24 11:27:08', NULL),
 ('S003', 'T005', 'closed', '2026-09-24 10:12:12', '2026-09-24 12:19:19');
 
--- orders เก็บข้อมูลการสั่งซื้อ
-CREATE TABLE orders (
+-- orders เก็บข้อมูลการสั่งซื้อแต่ละรอบ
+
+CREATE TABLE IF NOT EXISTS orders (
     order_id TEXT PRIMARY KEY,
+
     bills_id TEXT NOT NULL,
-    round INTEGER NOT NULL CHECK (round > 0),
-    ordered_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (bills_id) REFERENCES bills(bills_id) ON DELETE CASCADE
+
+    round INTEGER NOT NULL
+        CHECK (round > 0),
+
+    ordered_at TEXT NOT NULL
+        DEFAULT CURRENT_TIMESTAMP,
+
+    -- ป้องกันรอบซ้ำในบิลเดียวกัน
+    UNIQUE (bills_id, round),
+
+    FOREIGN KEY (bills_id)
+        REFERENCES bills(bills_id)
+        ON DELETE CASCADE
 );
 
-INSERT OR IGNORE INTO orders (order_id, bills_id, round, ordered_at) VALUES
+INSERT OR IGNORE INTO orders
+(order_id, bills_id, round, ordered_at) VALUES
+
 ('O001', 'S001', 2, '2026-09-24 11:24:20'),
 ('O002', 'S002', 1, '2026-09-24 11:38:28'),
 ('O003', 'S003', 1, '2026-09-24 10:38:28');
 
--- เก็บข้อมูลรายการการสั่งซื้ออาหารในแต่ละรอบ
-CREATE TABLE order_item (
+-- order_item เก็บรายการอาหารในแต่ละรอบ
+
+CREATE TABLE IF NOT EXISTS order_item (
     order_item_id TEXT PRIMARY KEY,
+
     order_id TEXT NOT NULL,
+
     menu_id TEXT NOT NULL,
-    quantity INTEGER NOT NULL CHECK (quantity > 0),
+
+    quantity INTEGER NOT NULL
+        CHECK (quantity > 0),
+
     note TEXT,
-    order_item_status TEXT NOT NULL DEFAULT 'pending' CHECK (order_item_status IN ('pending', 'cooking', 'served', 'cancel')),
-    order_item_price INTEGER NOT NULL CHECK (order_item_price >= 0),
-    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
-    FOREIGN KEY (menu_id) REFERENCES menu(menu_id) ON DELETE RESTRICT
+
+    order_item_status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (
+            order_item_status IN ('pending','cooking','served','cancel')
+        ),
+
+    -- เก็บราคาตอนที่ลูกค้าสั่ง
+    -- เพื่อป้องกันราคาย้อนหลังเปลี่ยนตาม menu.price
+    order_item_price INTEGER NOT NULL
+        CHECK (order_item_price >= 0),
+
+    FOREIGN KEY (order_id)
+        REFERENCES orders(order_id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (menu_id)
+        REFERENCES menu(menu_id)
+        ON DELETE RESTRICT
 );
 
-INSERT OR IGNORE INTO order_item (order_item_id, order_id, menu_id, quantity, note, order_item_status, order_item_price) VALUES
-('F001', 'O001', 'B002', 2, NULL, 'pending', 130),
-('F002', 'O001', 'M005', 1, 'I like a medium rare.', 'pending', 89),
-('F003', 'O001', 'M006', 1, 'I like a medium rare.', 'pending', 79);
+INSERT OR IGNORE INTO order_item
+(
+    order_item_id,
+    order_id,
+    menu_id,
+    quantity,
+    note,
+    order_item_status,
+    order_item_price
+) VALUES
 
--- คำสั่ง CREATE INDEX 
-CREATE INDEX idx_bills_tables_status ON bills(tables_id, bills_status);
-CREATE INDEX idx_order_item_order_id ON order_item(order_id);
+('F001', 'O001', 'B002', 2, NULL, 'pending', 65),
+('F002', 'O002', 'M005', 1, 'I like a medium rare.', 'pending', 89),
+('F003', 'O003', 'M006', 1, NULL, 'pending', 79);
+
+-- INDEX
+
+CREATE INDEX IF NOT EXISTS idx_bills_tables_status
+ON bills(tables_id, bills_status);
+
+CREATE INDEX IF NOT EXISTS idx_order_item_order_id
+ON order_item(order_id);
+
+-- ช่วยค้นหาเมนูตามชื่อ
+CREATE INDEX IF NOT EXISTS idx_menu_name
+ON menu(name);
+
+-- ช่วย query อันดับเมนูขายดีตามเวลา
+CREATE INDEX IF NOT EXISTS idx_orders_ordered_at
+ON orders(ordered_at);
