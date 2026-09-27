@@ -5,6 +5,7 @@ import {
     Text,
     View,
 } from 'react-native';
+import { useSQLiteContext } from 'expo-sqlite'; // ใช้ useSQLiteContext ตามข้อกำหนด
 
 import {
     getSalesSummary,
@@ -14,6 +15,7 @@ import {
 import { salesStyles } from '../../styles/salesStyles';
 
 const SalesSummaryScreen = () => {
+  const db = useSQLiteContext(); // ดึง instance ของ database จาก Provider ส่วนกลาง
   const [summary, setSummary] = useState({
     closed_bills: 0,
     total_sales: 0,
@@ -24,11 +26,12 @@ const SalesSummaryScreen = () => {
 
   const loadSales = async () => {
     try {
-      const summaryData = await getSalesSummary();
-      const menuData = await getSoldMenuSummary();
+      // ส่ง db เข้าไปในฟังก์ชัน SQL ที่อยู่ในโฟลเดอร์กลาง
+      const summaryData = await getSalesSummary(db);
+      const menuData = await getSoldMenuSummary(db);
 
-      setSummary(summaryData);
-      setMenus(menuData);
+      setSummary(summaryData || { closed_bills: 0, total_sales: 0, sold_items: 0 });
+      setMenus(menuData || []);
     } catch (error) {
       console.error('Sales summary error:', error);
     }
@@ -37,7 +40,7 @@ const SalesSummaryScreen = () => {
   useFocusEffect(
     useCallback(() => {
       loadSales();
-    }, [])
+    }, [db])
   );
 
   return (
@@ -45,7 +48,7 @@ const SalesSummaryScreen = () => {
 
       <FlatList
         data={menus}
-        keyExtractor={(item) => item.menu_id}
+        keyExtractor={(item, index) => item.menu_id?.toString() || index.toString()}
         ListHeaderComponent={
           <>
             <Text style={salesStyles.title}>
