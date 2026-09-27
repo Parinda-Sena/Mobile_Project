@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors } from './theme';
+import { colors } from './Theme';
 
 export const salesStyles = StyleSheet.create({
   container: {
@@ -64,4 +64,18 @@ export const salesStyles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 12,
   },
+ backBtn: {
+  height: 45,
+  justifyContent: 'center',
+  paddingHorizontal: 2,
+  paddingTop: 26,
+},
+backText: {
+  fontSize: 18,
+  color: colors.text,
+},
+
+list: {
+  flex: 1,
+},
 });
