@@ -1,5 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
-import * as SQLite from 'expo-sqlite';
+import { useSQLiteContext } from 'expo-sqlite'; // ใช้ useSQLiteContext แทน openDatabaseAsync
 import { useCallback, useState } from 'react';
 import {
     FlatList,
@@ -9,46 +9,18 @@ import {
 
 import EmptyState from '../../components/EmptyState';
 import OrderCard from '../../components/OrderCard';
-import { DATABASE_NAME } from '../../database/db';
+import { getOrderItems } from '../../database/db'; // นำเข้าจากโฟลเดอร์กลาง
 import { kitchenStyles } from '../../styles/kitchenStyles';
 
-const getOrderItems = async () => {
-  try {
-    const db = await SQLite.openDatabaseAsync(DATABASE_NAME);
-    const query = `
-      SELECT 
-        oi.order_item_id,
-        oi.order_id,
-        oi.menu_id,
-        oi.quantity,
-        oi.note,
-        oi.order_item_status,
-        oi.order_item_price,
-        m.name AS menu_name,
-        t.tables_number,
-        o.ordered_at
-      FROM order_item oi
-      JOIN menu m ON oi.menu_id = m.menu_id
-      JOIN orders o ON oi.order_id = o.order_id
-      JOIN bills b ON o.bills_id = b.bills_id
-      JOIN tables t ON b.tables_id = t.tables_id
-      ORDER BY o.ordered_at DESC;
-    `;
-    const result = await db.getAllAsync(query);
-    return result;
-  } catch (error) {
-    console.error('Error fetching order items:', error);
-    return [];
-  }
-};
-
 const OrderListScreen = () => {
+  const db = useSQLiteContext(); // ดึง db จาก Provider ส่วนกลาง
   const [orders, setOrders] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadOrders = async () => {
     try {
-      const data = await getOrderItems();
+      // ส่ง db เข้าไปในฟังก์ชันกลาง
+      const data = await getOrderItems(db);
       setOrders(data);
     } catch (error) {
       console.error('Load orders error:', error);
@@ -58,7 +30,7 @@ const OrderListScreen = () => {
   useFocusEffect(
     useCallback(() => {
       loadOrders();
-    }, [])
+    }, [db])
   );
 
   const refresh = async () => {
@@ -71,7 +43,7 @@ const OrderListScreen = () => {
     <View style={kitchenStyles.container}>
       <FlatList
         data={orders}
-        keyExtractor={(item) => item.order_item_id}
+        keyExtractor={(item) => item.order_item_id?.toString()}
         renderItem={({ item }) => (
           <OrderCard item={item} />
         )}
