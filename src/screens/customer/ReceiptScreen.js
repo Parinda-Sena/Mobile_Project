@@ -9,9 +9,22 @@ function ReceiptScreen(props) {
   const grandTotal = orders.reduce(
   (sum, order) => sum + (order.totalAmount || 0),0);
   const handleClear = () => {
-    Alert.alert('Payment successful','Do you want to delete all bills?',
-      [{ text: 'cancel', style: 'cancel' },{text: 'ok',onPress: () => {
-            if (onClearAllOrders) { onClearAllOrders(); }},},]);};
+    Alert.alert('Payment successful', 'Do you want to delete all bills?', [
+      { text: 'cancel', style: 'cancel' },
+      {
+        text: 'ok',
+        onPress: () => {
+          if (onClearAllOrders) {
+            onClearAllOrders(); // เรียกฟังก์ชันเคลียร์ข้อมูลบิลและตะกร้า
+          }
+          // ถ้าใช้งานผ่าน React Navigation ให้สั่งกลับหน้าก่อนหน้า
+          if (props.navigation?.goBack) {
+            props.navigation.goBack();
+          }
+        },
+      },
+    ]);
+  };
   return (
     <View style={styles.container}>
       <View style={styles.header}>
