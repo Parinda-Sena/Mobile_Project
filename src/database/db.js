@@ -229,20 +229,11 @@ export const initDatabase = async (db) => {
             ON DELETE RESTRICT
         );
 
-        INSERT OR IGNORE INTO order_item
-        (
-          order_item_id,
-          order_id,
-          menu_id,
-          quantity,
-          note,
-          order_item_status,
-          order_item_price
-        ) VALUES
+       INSERT OR IGNORE INTO order_item
+        ( order_item_id,order_id,menu_id,quantity,note,order_item_status,order_item_price) VALUES
           ('F001', 'O001', 'B002', 2, NULL, 'pending', 65),
-          ('F002', 'O001', 'M005', 1, 'I like a medium rare.', 'pending', 89),
-          ('F003', 'O001', 'M006', 1, NULL, 'pending', 79);
-
+          ('F002', 'O002', 'M005', 1, 'I like a medium rare.', 'pending', 89),
+          ('F003', 'O003', 'M006', 1, NULL, 'pending', 79);
 
         -- INDEX
 
@@ -275,7 +266,6 @@ export const initDatabase = async (db) => {
 
 // RESET DATABASE
 // ใช้สำหรับปุ่ม "ล้างข้อมูล"
-
 export const resetDatabase = async (db) => {
   try {
     await db.withTransactionAsync(async () => {
@@ -299,3 +289,336 @@ export const resetDatabase = async (db) => {
     throw error;
   }
 };
+
+// ส่วนฟังก์ชัน Query
+
+// ดึงรายการอาหารทั้งหมดสำหรับหน้าครัว/สถานะ
+export const getOrderItems = async (db) => {
+  try {
+    const query = `
+      SELECT
+        oi.order_item_id,
+        oi.order_id,
+        b.bills_id,
+        oi.quantity,
+        oi.note,
+        oi.order_item_status,
+        oi.order_item_price,
+        m.name AS menu_name,
+        t.tables_number,
+        o.round,
+        o.ordered_at
+      FROM order_item oi
+      JOIN menu m ON oi.menu_id = m.menu_id
+      JOIN orders o ON oi.order_id = o.order_id
+      JOIN bills b ON o.bills_id = b.bills_id
+      JOIN tables t ON b.tables_id = t.tables_id
+      WHERE b.bills_status = ?
+    `;
+
+    return await db.getAllAsync(query, ['open']);
+  } catch (error) {
+    console.error('Error getting order items:', error);
+    throw error;
+  }
+};
+
+// อัปเดตสถานะรายการอาหาร (เช่น เปลี่ยนจาก pending เป็น cooking หรือ served)
+export const updateOrderStatus = async (db, orderItemId, newStatus) => {
+  try {
+    const query = `
+      UPDATE order_item 
+      SET order_item_status = ? 
+      WHERE order_item_id = ?
+    `;
+    await db.runAsync(query, [newStatus, orderItemId]);
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    throw error;
+  }
+};
+
+// ค้นหาชื่อเมนู
+export const searchMenuItems = async (db, searchQuery) => {
+  try {
+    const query = 'SELECT menu_id, name, price, category_id FROM menu WHERE name LIKE ?';
+    const results = await db.getAllAsync(query, [`%${searchQuery.trim()}%`]);
+    return results;
+  } catch (error) {
+    console.error('Error searching menu:', error);
+    return [];
+  }
+};
+
+// ดึงเมนูตามหมวดหมู่
+export const getMenuItemsByCategory = async (db, categoryId) => {
+  try {
+    const query = 'SELECT menu_id, name, price, category_id FROM menu WHERE category_id = ?';
+    const result = await db.getAllAsync(query, [categoryId]);
+    return result;
+  } catch (error) {
+    console.error('Error loading menu by category:', error);
+    return [];
+  }
+};
+
+
+// เพิ่มฟังก์ชันสรุปยอดขายสำหรับ SalesSummaryScreen
+// ดึงสรุปยอดขายรวมและจำนวนบิลที่ปิดแล้ว (bills_status = 'closed')
+export const getSalesSummary = async (db) => {
+  try {
+    // นับจำนวนบิลที่ปิดแล้ว และรวมเงินจาก order_item ของบิลที่ปิดแล้ว
+    const billQuery = `
+      SELECT 
+        COUNT(b.bills_id) as closed_bills, 
+        COALESCE(SUM(oi.quantity * oi.order_item_price), 0) as total_sales
+      FROM bills b
+      LEFT JOIN orders o ON b.bills_id = o.bills_id
+      LEFT JOIN order_item oi ON o.order_id = oi.order_id
+      WHERE b.bills_status = 'closed'
+    `;
+    
+    // นับจำนวนรายการอาหารทั้งหมดที่ขายได้จากบิลที่ปิดแล้ว
+    const itemQuery = `
+      SELECT COALESCE(SUM(oi.quantity), 0) as sold_items
+      FROM bills b
+      JOIN orders o ON b.bills_id = o.bills_id
+      JOIN order_item oi ON o.order_id = oi.order_id
+      WHERE b.bills_status = 'closed'
+    `;
+
+    const billResult = await db.getFirstAsync(billQuery);
+    const itemResult = await db.getFirstAsync(itemQuery);
+
+    return {
+      closed_bills: billResult?.closed_bills || 0,
+      total_sales: billResult?.total_sales || 0,
+      sold_items: itemResult?.sold_items || 0,
+    };
+  } catch (error) {
+    console.error('Error getting sales summary:', error);
+    throw error;
+  }
+};
+
+//ดึงรายการอาหารที่ขายได้แยกตามเมนู (เฉพาะบิลที่ปิดแล้ว)
+export const getSoldMenuSummary = async (db) => {
+  try {
+    const query = `
+      SELECT 
+        m.menu_id,
+        m.name as menu_name,
+        SUM(oi.quantity) as quantity,
+        SUM(oi.quantity * oi.order_item_price) as total
+      FROM bills b
+      JOIN orders o ON b.bills_id = o.bills_id
+      JOIN order_item oi ON o.order_id = oi.order_id
+      JOIN menu m ON oi.menu_id = m.menu_id
+      WHERE b.bills_status = 'closed'
+      GROUP BY m.menu_id, m.name
+    `;
+    const result = await db.getAllAsync(query);
+    return result;
+  } catch (error) {
+    console.error('Error getting sold menu summary:', error);
+    throw error;
+  }
+};
+export const getTables = async (db) => {
+  try {
+    const query = `
+      SELECT
+        tables_id,
+        tables_number,
+        tables_status
+      FROM tables
+      ORDER BY CAST(tables_number AS INTEGER)
+    `;
+
+    return await db.getAllAsync(query);
+  } catch (error) {
+    console.error('Error getting tables:', error);
+    throw error;
+  }
+};
+
+// สร้าง Order จาก Cart และบันทึกลง Database
+export const createOrder = async (db, tablesId, cart) => {
+  try {
+    if (!tablesId) {
+      throw new Error('ไม่พบโต๊ะที่เลือก');
+    }
+
+    if (!cart || cart.length === 0) {
+      throw new Error('ไม่มีรายการอาหารในตะกร้า');
+    }
+
+    let createdOrder = null;
+
+    await db.withTransactionAsync(async () => {
+
+      // ตรวจสอบว่าโต๊ะมีอยู่จริง
+      const table = await db.getFirstAsync(
+        `
+        SELECT tables_id, tables_number, tables_status
+        FROM tables
+        WHERE tables_id = ?
+        `,
+        [tablesId]
+      );
+
+      if (!table) {
+        throw new Error('ไม่พบโต๊ะที่เลือก');
+      }
+
+      // หา Bill ที่ยังเปิดอยู่ของโต๊ะนี้
+      let bill = await db.getFirstAsync(
+        `
+        SELECT bills_id
+        FROM bills
+        WHERE tables_id = ?
+          AND bills_status = ?
+        ORDER BY opened_at DESC
+        LIMIT 1
+        `,
+        [tablesId, 'open']
+      );
+
+      //ถ้ายังไม่มี Bill ให้สร้างใหม่
+      if (!bill) {
+        const billsId = `S${Date.now()}`;
+
+        await db.runAsync(
+          `INSERT INTO bills (bills_id,tables_id,bills_status)VALUES (?, ?, ?)`,
+          [
+            billsId,
+            tablesId,
+            'open',
+          ]
+        );
+
+        bill = {
+          bills_id: billsId,
+        };
+      }
+
+      //หาเลขรอบถัดไปของ Bill นี้
+      const roundResult = await db.getFirstAsync(
+        `
+        SELECT COALESCE(MAX(round), 0) + 1 AS next_round
+        FROM orders
+        WHERE bills_id = ?
+        `,
+        [bill.bills_id]
+      );
+
+      const nextRound = roundResult?.next_round || 1;
+
+      //สร้าง Order
+      const orderId = `O${Date.now()}`;
+
+      await db.runAsync(
+        `
+        INSERT INTO orders (
+          order_id,
+          bills_id,
+          round
+        )
+        VALUES (?, ?, ?)
+        `,
+        [
+          orderId,
+          bill.bills_id,
+          nextRound,
+        ]
+      );
+
+      // 6. เพิ่มอาหารแต่ละรายการลง order_item
+      for (let index = 0; index < cart.length; index++) {
+
+        const item = cart[index];
+
+        // ตรวจสอบ menu จาก Database
+        const menu = await db.getFirstAsync(
+          `
+          SELECT menu_id, price, available
+          FROM menu
+          WHERE menu_id = ?
+          `,
+          [item.menu_id]
+        );
+
+        if (!menu) {
+          throw new Error(
+            `ไม่พบเมนู ${item.menu_id}`
+          );
+        }
+
+        if (menu.available !== 1) {
+          throw new Error(
+            `เมนู ${item.name || item.menu_id} ไม่พร้อมขาย`
+          );
+        }
+
+        if (!item.quantity || item.quantity <= 0) {
+          throw new Error(
+            `จำนวนของ ${item.name || item.menu_id} ไม่ถูกต้อง`
+          );
+        }
+
+        const orderItemId =
+          `F${Date.now()}${index}`;
+
+        await db.runAsync(
+          ` INSERT INTO order_item ( order_item_id, order_id, menu_id, quantity, note,
+          order_item_status, order_item_price)VALUES (?, ?, ?, ?, ?, ?, ?) `,
+          [
+            orderItemId,
+            orderId,
+            menu.menu_id,
+            item.quantity,
+            item.note || null,
+            'pending',
+            menu.price,
+          ]
+        );
+      }
+      //เปลี่ยนสถานะโต๊ะเป็นไม่ว่าง
+      await db.runAsync(
+        `
+        UPDATE tables
+        SET tables_status = ?
+        WHERE tables_id = ?
+        `,
+        [
+          'unavailable',
+          tablesId,
+        ]
+      );
+
+      createdOrder = {
+        orderId,
+        billsId: bill.bills_id,
+        round: nextRound,
+        tablesId,
+        tablesNumber: table.tables_number,
+      };
+    });
+
+    console.log(
+      'Order created successfully:',
+      createdOrder
+    );
+
+    return createdOrder;
+
+  } catch (error) {
+    console.error(
+      'Error creating order:',
+      error
+    );
+
+    throw error;
+  }
+};
+
