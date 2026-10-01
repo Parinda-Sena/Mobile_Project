@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import colors from '../../../styles/Theme';
-import { getMenuItemsByCategory } from '../../../database/db';
 
 const MENU_IMAGES = {
   'Chocolate Bingsu': 'https://shopee.co.th/blog/wp-content/uploads/2022/02/E6OnzwWXsAIE3s1-1.jpg',
@@ -20,7 +19,7 @@ const MENU_IMAGES = {
 const DEFAULT_IMAGE = 'https://via.placeholder.com/150';
 
 function DessertScreen({ onBack, onAddToCart }) {
-  const db = useSQLiteContext(); 
+  const db = useSQLiteContext();
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,10 +28,23 @@ function DessertScreen({ onBack, onAddToCart }) {
 
     async function fetchMenu() {
       try {
-        const result = await getMenuItemsByCategory(db, 'C001');
+        const result = await db.getAllAsync(
+          `
+          SELECT
+            menu_id,
+            name,
+            price,
+            category_id,
+            available
+          FROM menu
+          WHERE category_id = ?
+          ORDER BY menu_id
+          `,
+          ['C001']
+        );
 
         if (isMounted) {
-          setMenuItems(result);
+          setMenuItems(result || []);
         }
       } catch (error) {
         console.error('Error loading desserts:', error);
@@ -58,6 +70,7 @@ function DessertScreen({ onBack, onAddToCart }) {
             <Text style={styles.backText}>‹ Back</Text>
           </TouchableOpacity>
         )}
+
         <Text style={styles.title}>Desserts</Text>
         <Text style={styles.subtitle}>ของหวาน</Text>
       </View>
@@ -71,23 +84,31 @@ function DessertScreen({ onBack, onAddToCart }) {
           {menuItems.map((item) => (
             <View key={item.menu_id} style={styles.menuCard}>
               <View style={styles.imageBox}>
-                <Image 
-                  source={{ uri: MENU_IMAGES[item.name] || DEFAULT_IMAGE }} 
+                <Image
+                  source={{ uri: MENU_IMAGES[item.name] || DEFAULT_IMAGE }}
                   style={styles.menuImage}
                   resizeMode="cover"
                 />
               </View>
+
               <View style={styles.info}>
                 <Text style={styles.menuName}>{item.name}</Text>
                 <Text style={styles.price}>{item.price} ฿</Text>
               </View>
-              <TouchableOpacity 
-                style={styles.addButton} 
-                activeOpacity={0.7}
-                onPress={() => onAddToCart && onAddToCart(item)}
-              >
-                <Text style={styles.addText}>+</Text>
-              </TouchableOpacity>
+
+              {item.available === 1 ? (
+                <TouchableOpacity
+                  style={styles.addButton}
+                  activeOpacity={0.7}
+                  onPress={() => onAddToCart && onAddToCart(item)}
+                >
+                  <Text style={styles.addText}>+</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.soldOutButton}>
+                  <Text style={styles.soldOutText}>หมด</Text>
+                </View>
+              )}
             </View>
           ))}
         </ScrollView>
@@ -113,6 +134,8 @@ const styles = StyleSheet.create({
   price: { fontSize: 15, fontWeight: '600', color: colors.cyan },
   addButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.cyan, justifyContent: 'center', alignItems: 'center' },
   addText: { color: colors.card, fontSize: 25, fontWeight: '500', lineHeight: 27 },
+  soldOutButton: { width: 50, height: 38, borderRadius: 19, backgroundColor: colors.red, justifyContent: 'center', alignItems: 'center' },
+  soldOutText: { color: colors.card, fontSize: 13, fontWeight: '600' },
 });
 
 export default DessertScreen;
