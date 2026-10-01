@@ -1,24 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import colors from '../../../styles/Theme';
 import { getMenuItemsByCategory } from '../../../database/db';
 
-const MENU_ICONS = {
-  'Chocolate Bingsu': '🍫',
-  'Honey Toast': '🍞',
-  'Macarons': '🍪',
-  'Blueberry Cheesecake': '🍰',
-  'Banoffee Pie': '🍌',
-  'Strawberry Bingsu': '🍓',
-  'Orange Cake': '🍊',
-  'Brownie': '🍫',
-  'Oreo Bingsu': '🍨',
-  'Volcano Bingsu': '🍰',
+const MENU_IMAGES = {
+  'Chocolate Bingsu': 'https://shopee.co.th/blog/wp-content/uploads/2022/02/E6OnzwWXsAIE3s1-1.jpg',
+  'Honey Toast': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-iyOgfMr5mFAQHxDCUa2PxWKM7VtaHNv3eAe2LyZUOFoYpG4BnK0wC1E&s=10',
+  'Macarons': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRxWktYk45-oYq7S2BXTmOpNQXkyBlnAjs6522NuQQJXjHcOnQAfImenOw5&s=10',
+  'Blueberry Cheesecake': 'https://www.calforlife.com/image/food/Blueberry-Cheesecake.jpg',
+  'Banoffee Pie': 'https://sprouted-seeds.com/wp-content/uploads/2021/08/S__250593392.jpg',
+  'Strawberry Bingsu': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS8TT4Q501KbyMhCTtpv2xBIWgaZ_3JV53-5x5WnRRmOIHjzYQg5d2GWelE&s=10',
+  'Orange Cake': 'https://api2.krua.co/wp-content/uploads/2025/01/ArticlePic_1670x1095_Artboard-1-16-scaled.jpg',
+  'Brownie': 'https://img.wongnai.com/p/1920x0/2025/04/07/11282c9ca2eb42af9b46ff2119fbb933.jpg',
+  'Oreo Bingsu': 'https://img.wongnai.com/p/400x0/2020/05/04/ca1cf4d65693470287c35fff3f0e6038.jpg',
+  'Volcano Bingsu': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQVrBEMXvWri3hm013kvpaGc3oOFDJGea_NGgM383tiXbfNiuOUdRrG_-3v&s=10',
 };
 
+const DEFAULT_IMAGE = 'https://via.placeholder.com/150';
+
 function DessertScreen({ onBack, onAddToCart }) {
-  const db = useSQLiteContext(); //ดึง db จาก Provider ส่วนกลาง
+  const db = useSQLiteContext(); 
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +29,6 @@ function DessertScreen({ onBack, onAddToCart }) {
 
     async function fetchMenu() {
       try {
-        //ดึงข้อมูล Dessert (category_id = 'C001') ผ่านฟังก์ชันกลาง
         const result = await getMenuItemsByCategory(db, 'C001');
 
         if (isMounted) {
@@ -70,7 +71,11 @@ function DessertScreen({ onBack, onAddToCart }) {
           {menuItems.map((item) => (
             <View key={item.menu_id} style={styles.menuCard}>
               <View style={styles.imageBox}>
-                <Text style={styles.icon}>{MENU_ICONS[item.name] || '🍰'}</Text>
+                <Image 
+                  source={{ uri: MENU_IMAGES[item.name] || DEFAULT_IMAGE }} 
+                  style={styles.menuImage}
+                  resizeMode="cover"
+                />
               </View>
               <View style={styles.info}>
                 <Text style={styles.menuName}>{item.name}</Text>
@@ -101,8 +106,8 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   menuContainer: { paddingHorizontal: 24, paddingBottom: 30, gap: 12 },
   menuCard: { minHeight: 90, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 18, padding: 12, flexDirection: 'row', alignItems: 'center' },
-  imageBox: { width: 68, height: 68, borderRadius: 15, backgroundColor: '#F3EEE7', justifyContent: 'center', alignItems: 'center' },
-  icon: { fontSize: 34 },
+  imageBox: { width: 68, height: 68, borderRadius: 15, backgroundColor: '#F3EEE7', overflow: 'hidden' },
+  menuImage: { width: '100%', height: '100%' },
   info: { flex: 1, marginLeft: 15 },
   menuName: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 6 },
   price: { fontSize: 15, fontWeight: '600', color: colors.cyan },
