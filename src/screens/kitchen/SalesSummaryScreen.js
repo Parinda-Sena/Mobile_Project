@@ -88,12 +88,15 @@ const SalesSummaryScreen = ({ navigation }) => {
   return (
     <View style={salesStyles.container}>
 
+      {/* ปุ่มย้อนกลับ */}
       <TouchableOpacity
         style={salesStyles.backBtn}
         onPress={() => navigation.navigate('KitchenHome')}
         activeOpacity={0.7}
       >
-        <Text style={salesStyles.backText}>‹ Back</Text>
+        <Text style={salesStyles.backText}>
+          ‹ Back
+        </Text>
       </TouchableOpacity>
 
       <FlatList
@@ -109,6 +112,7 @@ const SalesSummaryScreen = ({ navigation }) => {
               สรุปยอดขาย
             </Text>
 
+            {/* จำนวนบิล */}
             <View style={salesStyles.summaryCard}>
               <Text style={salesStyles.summaryLabel}>
                 จำนวนบิลที่ปิดแล้ว
@@ -119,6 +123,7 @@ const SalesSummaryScreen = ({ navigation }) => {
               </Text>
             </View>
 
+            {/* ยอดขายรวม */}
             <View style={salesStyles.summaryCard}>
               <Text style={salesStyles.summaryLabel}>
                 ยอดขายรวม
@@ -129,6 +134,7 @@ const SalesSummaryScreen = ({ navigation }) => {
               </Text>
             </View>
 
+            {/* จำนวนอาหารที่ขาย */}
             <View style={salesStyles.summaryCard}>
               <Text style={salesStyles.summaryLabel}>
                 จำนวนอาหารที่ขาย
@@ -139,6 +145,17 @@ const SalesSummaryScreen = ({ navigation }) => {
               </Text>
             </View>
 
+            {/* ปุ่มไปหน้า 10 อันดับ */}
+            <TouchableOpacity
+              style={salesStyles.topMenuButton}
+              onPress={() => navigation.navigate('TopMenu')}
+              activeOpacity={0.7}
+            >
+              <Text style={salesStyles.topMenuButtonText}>
+                10 อันดับเมนูขายดี
+              </Text>
+            </TouchableOpacity>
+
             <Text style={salesStyles.sectionTitle}>
               รายการอาหารที่ขาย
             </Text>
@@ -147,6 +164,7 @@ const SalesSummaryScreen = ({ navigation }) => {
 
         renderItem={({ item }) => (
           <View style={salesStyles.menuCard}>
+
             <Text style={salesStyles.menuName}>
               {item.menu_name}
             </Text>
@@ -158,6 +176,7 @@ const SalesSummaryScreen = ({ navigation }) => {
             <Text style={salesStyles.menuDetail}>
               ยอดรวม {item.total} บาท
             </Text>
+
           </View>
         )}
 
@@ -207,6 +226,7 @@ const SalesSummaryScreen = ({ navigation }) => {
                       ดูบิล
                     </Text>
                   </TouchableOpacity>
+
                 </View>
               ))
             )}

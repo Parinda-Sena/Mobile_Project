@@ -6,7 +6,7 @@ export const salesStyles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
     padding: 16,
-    paddingTop: 50, // เว้นขอบบนหลบขอบจอมือถือ
+    paddingTop: 50,
   },
 
   // ส่วนหัวข้อและปุ่มย้อนกลับ
@@ -28,7 +28,7 @@ export const salesStyles = StyleSheet.create({
     color: colors.text,
   },
 
-  // การ์ดยอดขายรวม (เน้นให้เด่นที่สุด)
+  // การ์ดยอดขายรวม
   mainCard: {
     backgroundColor: colors.card,
     borderWidth: 1.5,
@@ -62,7 +62,7 @@ export const salesStyles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 14,
     padding: 16,
-    marginHorizontal: 4, // เว้นช่องไฟซ้ายขวาเล็กน้อย
+    marginHorizontal: 4,
   },
 
   summaryLabel: {
@@ -85,7 +85,7 @@ export const salesStyles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  // การ์ดรายการอาหาร (จัดเลย์เอาต์ซ้าย-ขวาให้ดูโปร่งขึ้น)
+  // การ์ดรายการอาหาร
   menuCard: {
     backgroundColor: colors.card,
     borderWidth: 1,
@@ -120,4 +120,64 @@ export const salesStyles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
   },
+
+  // ประวัติบิลเก่า
+  billRow: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  billTable: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+
+  billTime: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.dim,
+    textAlign: 'center',
+  },
+
+  billTotal: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'right',
+    marginRight: 10,
+  },
+
+  viewBill: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    paddingHorizontal: 4,
+  },
+  topMenuButton: {
+  backgroundColor: colors.card,
+  borderWidth: 1,
+  borderColor: colors.border,
+  borderRadius: 12,
+  paddingVertical: 14,
+  paddingHorizontal: 16,
+  marginTop: 12,
+  marginBottom: 12,
+},
+
+topMenuButtonText: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: colors.text,
+  textAlign: 'center',
+},
 });
