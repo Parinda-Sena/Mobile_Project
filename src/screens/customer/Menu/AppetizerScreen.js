@@ -1,24 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { useSQLiteContext } from 'expo-sqlite'; // นำเข้า useSQLiteContext แทน openDatabaseAsync
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import { useSQLiteContext } from 'expo-sqlite';
 import colors from '../../../styles/Theme';
-import { getMenuItemsByCategory } from '../../../database/db'; // นำเข้าฟังก์ชันกลาง
+import { getMenuItemsByCategory } from '../../../database/db';
 
-const MENU_ICONS = {
-  'Shrimp Donut': '🍩',
-  'French Fries': '🍟',
-  'Chicken Nuggets': '🍗',
-  'Chicken Pop': '🍗',
-  'Egg Tart': '🥧',
-  'Wingz Zabb': '🍗',
-  'Cream of Truffle Mushroom Soup': '🍲',
-  'Toast': '🍞',
-  'Spinach with Cheese': '🥬',
-  'Lasagna': '🍝',
+const MENU_IMAGES = {
+  'Shrimp Donut': 'https://www.dailynews.co.th/wp-content/uploads/2022/05/2-1-1.jpg',
+  'French Fries': 'https://img.magnific.com/free-photo/fried-potatoes-with-ketchup-mayonnaise-isolated-white-background_123827-21724.jpg?semt=ais_hybrid&w=740&q=80',
+  'Chicken Nuggets': 'https://fit-d.com/uploads/food/cdfe567fab5d89ed634629e91fc8eb5c.jpg',
+  'Chicken Pop': 'https://png.pngtree.com/png-clipart/20250224/original/pngtree-crispy-fried-chicken-pieces-falling-on-paper-plate-png-image_20507209.png',
+  'Egg Tart': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS05ht211s37lQ5p7IkhBnmnugbndZWkbI17Whs0AzfOMQv5SinY9Qb2vD2&s=10',
+  'Wingz Zabb': 'https://obs-ect.line-scdn.net/r/ect/ect/cj02dGI5dHZrb3M0aWZ2JnM9anA2JnQ9bSZ1PTFmdmM4YnN1azRkZzAmaT0w',
+  'Cream of Truffle Mushroom Soup': 'https://www.greengenelife.com/wp-content/uploads/2024/09/Truffle-mushroom-soup-1.jpg',
+  'Toast': 'https://png.pngtree.com/png-clipart/20240814/original/pngtree-three-slices-of-toasted-bread-stacked-vertically-png-image_15771956.png',
+  'Spinach with Cheese': 'https://cuisineyimyai.wordpress.com/wp-content/uploads/2014/10/1385949783-image-o.jpg?w=640',
+  'Lasagna': 'https://aroifin.com/wp-content/uploads/2025/12/17122025-lasagna-cover.webp',
 };
 
 function AppetizerScreen({ onBack, onAddToCart }) {
-  const db = useSQLiteContext(); // ดึง db จาก Provider ส่วนกลาง
+  const db = useSQLiteContext();
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +27,6 @@ function AppetizerScreen({ onBack, onAddToCart }) {
 
     async function fetchMenu() {
       try {
-        // ดึงข้อมูล Appetizers (category_id = 'C004') ผ่านฟังก์ชันกลาง
         const result = await getMenuItemsByCategory(db, 'C004');
 
         if (isMounted) {
@@ -70,7 +69,8 @@ function AppetizerScreen({ onBack, onAddToCart }) {
           {menuItems.map((item) => (
             <View key={item.menu_id} style={styles.menuCard}>
               <View style={styles.imageBox}>
-                <Text style={styles.icon}>{MENU_ICONS[item.name] || '🍽️'}</Text>
+                <Image source={{ uri: MENU_IMAGES[item.name] || DEFAULT_IMAGE }} 
+                  style={styles.menuImage} resizeMode="cover" />
               </View>
               <View style={styles.info}>
                 <Text style={styles.menuName}>{item.name}</Text>
@@ -101,8 +101,8 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   menuContainer: { paddingHorizontal: 24, paddingBottom: 30, gap: 12 },
   menuCard: { minHeight: 90, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 18, padding: 12, flexDirection: 'row', alignItems: 'center' },
-  imageBox: { width: 68, height: 68, borderRadius: 15, backgroundColor: '#F3EEE7', justifyContent: 'center', alignItems: 'center' },
-  icon: { fontSize: 34 },
+  imageBox: { width: 68, height: 68, borderRadius: 15, backgroundColor: '#F3EEE7', overflow: 'hidden' },
+  menuImage: { width: '100%', height: '100%' },
   info: { flex: 1, marginLeft: 15 },
   menuName: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 6 },
   price: { fontSize: 15, fontWeight: '600', color: colors.cyan },
