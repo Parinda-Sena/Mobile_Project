@@ -1,24 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { useSQLiteContext } from 'expo-sqlite'; // 1. นำเข้า useSQLiteContext แทน openDatabaseAsync
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import { useSQLiteContext } from 'expo-sqlite';
 import colors from '../../../styles/Theme';
-import { getMenuItemsByCategory } from '../../../database/db'; // 2. นำเข้าฟังก์ชันกลางจากโฟลเดอร์ db
+import { getMenuItemsByCategory } from '../../../database/db';
 
-const MENU_ICONS = { 
-  'Ommlette on Rice': '🍳',
-  'Tom Yum Goong': '🍲',
-  'American Fried Rice': '🍛',
-  'Pork Steak': '🥩',
-  'Beef Steak': '🥩',
-  'Spaghetti with Spicy Seafood': '🍝',
-  'Spaghetti Carbonara': '🍝',
-  'Stir-Fried Basil with Minced Pork on Rice': '🍛',
-  'Pork Fried Rice': '🍚',
-  'Deep-Fried Seabass with Fish Sauce': '🐟',
+const MENU_IMAGES = {
+  'Ommlette on Rice': 'https://s359.kapook.com/pagebuilder/4854bb38-8906-4f15-9684-172c873d305f.jpg',
+  'Tom Yum Goong': 'https://ptkss.com/wp-content/uploads/2025/10/%E0%B8%95%E0%B9%89%E0%B8%A1%E0%B8%A2%E0%B8%B3%E0%B8%81%E0%B8%B8%E0%B9%89%E0%B8%87.png',
+  'American Fried Rice': 'https://img.kapook.com/u/pirawan/Cooking1/americanfriedrice.jpg',
+  'Pork Steak': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQccO7bGVdZB_NVUl3QDvx_aOOKqKGq5Jz2KTICAg-TH1RuEFyD2XhaKwda&s=10',
+  'Beef Steak': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThExAlN28ZEQqYQoX-LSnlxrf3lpsFB8TpvWb-JsyTWYF-pAcZSnqKco8&s=10',
+  'Spaghetti with Spicy Seafood': 'https://s359.kapook.com/pagebuilder/19910966-cc8c-4be8-ad45-b90915bdb54a.jpg',
+  'Spaghetti Carbonara': 'https://static.cdntap.com/tap-assets-prod/wp-content/uploads/sites/25/2022/03/pasta-spaghetti-Carbonara.jpg?width=700&quality=95',
+  'Stir-Fried Basil with Minced Pork on Rice': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSfCiJmeeNs0zF1_mPggVhRQYOSdAJDeiFmnVgNUqrbfBvnPpCsuxhlG8M&s=10',
+  'Pork Fried Rice': 'https://s359.kapook.com/pagebuilder/2810e9c2-ac36-4970-bc50-d2fa431e2c3c.jpg',
+  'Deep-Fried Seabass with Fish Sauce': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnwgEBpHJgjT2232PL0xWOpi_OC97Lj-9aazxQQpRmOFFk2fcSixhgNKU&s=10',
 };
 
+const DEFAULT_IMAGE = 'https://via.placeholder.com/150';
+
 function MainCourseScreen({ onBack, onAddToCart }) {
-  const db = useSQLiteContext(); // 3. ดึง db จาก Provider ส่วนกลาง
+  const db = useSQLiteContext();
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +29,7 @@ function MainCourseScreen({ onBack, onAddToCart }) {
 
     async function fetchMenu() {
       try {
-        // 4. เรียกใช้ฟังก์ชันกลางสำหรับดึง Main Course (category_id = 'C003') โดยส่ง db เข้าไป
+        // ดึงข้อมูล Main Course (category_id = 'C003')
         const result = await getMenuItemsByCategory(db, 'C003');
 
         if (isMounted) {
@@ -70,7 +72,11 @@ function MainCourseScreen({ onBack, onAddToCart }) {
           {menuItems.map((item) => (
             <View key={item.menu_id} style={styles.menuCard}>
               <View style={styles.imageBox}>
-                <Text style={styles.icon}>{MENU_ICONS[item.name] || '🍛'}</Text>
+                <Image 
+                  source={{ uri: MENU_IMAGES[item.name] || DEFAULT_IMAGE }} 
+                  style={styles.menuImage}
+                  resizeMode="cover"
+                />
               </View>
               <View style={styles.info}>
                 <Text style={styles.menuName}>{item.name}</Text>
@@ -101,8 +107,8 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   menuContainer: { paddingHorizontal: 24, paddingBottom: 30, gap: 12 },
   menuCard: { minHeight: 90, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 18, padding: 12, flexDirection: 'row', alignItems: 'center' },
-  imageBox: { width: 68, height: 68, borderRadius: 15, backgroundColor: '#F3EEE7', justifyContent: 'center', alignItems: 'center' },
-  icon: { fontSize: 34 },
+  imageBox: { width: 68, height: 68, borderRadius: 15, backgroundColor: '#F3EEE7', overflow: 'hidden' },
+  menuImage: { width: '100%', height: '100%' },
   info: { flex: 1, marginLeft: 15 },
   menuName: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 6 },
   price: { fontSize: 15, fontWeight: '600', color: colors.cyan },
