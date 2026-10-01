@@ -8,59 +8,62 @@ const STATUS_CONFIG = {
   pending: { label: '⏳ Pending', color: '#E65100', bgColor: '#FFF3E0' },
   cooking: { label: '🍳 Cooking', color: '#0288D1', bgColor: '#E1F5FE' },
   served: { label: '✅ Served', color: '#2E7D32', bgColor: '#E8F5E9' },
+  cancel: { label: '❌ Cancelled', color: '#C62828', bgColor: '#FFEBEE' },
 };
-function ReceiptScreen({ navigation, route, orders: initialOrders, tables_id: propTableId, tables_number: propTableNum, onBack, onClearAllOrders }) {
+function ReceiptScreen(props) {
   const db = useSQLiteContext();
-  const tables_id = propTableId ?? route?.params?.tables_id;
-  const tables_number = propTableNum ?? route?.params?.tables_number;
-  const handleBack = onBack || (navigation?.canGoBack() ? () => navigation.goBack() : null);
+  const navigation = props.navigation;
+  const tables_id = props.tables_id ?? props.route?.params?.tables_id;
+  const tables_number = props.tables_number ?? props.route?.params?.tables_number;
+  const handleBack = props.onBack || (navigation?.canGoBack() ? () => navigation.goBack() : null);
   const [billId, setBillId] = useState(null);
-  const [orders, setOrders] = useState(initialOrders || route?.params?.orders || []);
+  const [orders, setOrders] = useState(props.orders || props.route?.params?.orders || []);
   const [loading, setLoading] = useState(true);
-  const fetchOrders = useCallback(async () => {
-    if (!db || !tables_id) return setLoading(false);
+  const fetchOrders = useCallback(async (isInitial = false) => {
+    if (!tables_id) return isInitial && setLoading(false);
     try {
+      if (isInitial && orders.length === 0) setLoading(true);
       const result = await getActiveBillOrders(db, tables_id);
       if (result) {
         if (result.billId || result.bill_id) setBillId(result.billId || result.bill_id);
-        if (result.orders?.length) {
-          setOrders(result.orders.map((order) => ({...order, items: (order.items || []).map((item) => ({...item,
-              status: String(item.order_item_status || item.status || 'pending').toLowerCase(),
-              name: item.name || item.menu_name || 'Menu List', price: item.price || 0, quantity: item.quantity || 1,
-              note: item.note || item.order_item_note || '',})),
+        if (Array.isArray(result.orders) && result.orders.length > 0) {
+          setOrders(result.orders.map((order) => ({ ...order, items: (order.items || []).map((item) => 
+            ({ ...item, status: String(item.order_item_status || item.status || 'pending').toLowerCase(),
+              name: item.name || item.menu_name || 'Menu List', price: item.price || 0,
+              quantity: item.quantity || 1, note: item.note || item.order_item_note || '', })),
           })));
         }
       }
     } catch (error) {
       console.error('Failed to load bill orders:', error);
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   }, [db, tables_id]);
   useFocusEffect(useCallback(() => {
-    fetchOrders();
-    const timer = setInterval(fetchOrders, 3000);
+    fetchOrders(true);
+    const timer = setInterval(() => fetchOrders(false), 3000);
     return () => clearInterval(timer);
   }, [fetchOrders]));
-  const grandTotal = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+  const grandTotal = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
   const handleClear = () => {
     Alert.alert('Payment successful', 'Do you want to close this bill and clear the table?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'OK',onPress: async () => {
+      { text: 'OK', onPress: async () => {
           try {
             const targetBillId = billId || orders[0]?.bill_id || orders[0]?.billId;
-            if (!targetBillId || !tables_id) return Alert.alert('Error', 'ไม่พบข้อมูลบิลหรือหมายเลขโต๊ะ');
-            await closeBillAndCheckout(db, targetBillId, tables_id);
-            onClearAllOrders?.();
+            if (targetBillId) await closeBillAndCheckout(db, targetBillId, tables_id);
+            props.onClearAllOrders?.();
             setTimeout(() => navigation?.navigate ? navigation.navigate('Table') : handleBack?.(), 100);
           } catch (error) {
-            Alert.alert('Error', `ไม่สามารถปิดบิลได้: ${error.message || 'เกิดข้อผิดพลาด'}`);
+            console.error('Check Bill error:', error);
+            setTimeout(() => Alert.alert('Error', `ไม่สามารถปิดบิลได้: ${error.message || 'เกิดข้อผิดพลาด'}`), 100);
           }
         },
       },
     ]);
   };
-  if (loading && !orders.length) {
+  if (loading && orders.length === 0) {
     return (
       <View style={[styles.container, styles.centerBox]}>
         <ActivityIndicator size="large" color={colors.cyan} />
@@ -79,7 +82,7 @@ function ReceiptScreen({ navigation, route, orders: initialOrders, tables_id: pr
         <Text style={styles.title}>Receipt {tables_number ? `(Table ${tables_number})` : ''}</Text>
         <Text style={styles.subtitle}>All ordered food items</Text>
       </View>
-      {!orders.length ? (
+      {orders.length === 0 ? (
         <View style={styles.centerBox}>
           <Text style={{ fontSize: 48, marginBottom: 10 }}>📄</Text>
           <Text style={{ fontSize: 16, color: colors.dim }}>Doesn't Have Order yet</Text>
@@ -117,7 +120,7 @@ function ReceiptScreen({ navigation, route, orders: initialOrders, tables_id: pr
           ))}
         </ScrollView>
       )}
-      {!!orders.length && (
+      {orders.length > 0 && (
         <View style={styles.footer}>
           <View style={[styles.rowBetween, { marginBottom: 14 }]}>
             <Text style={styles.boldText}>Total</Text>
