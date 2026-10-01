@@ -2,182 +2,29 @@ import { StyleSheet } from 'react-native';
 import { colors } from './Theme';
 
 export const salesStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bg,
-    padding: 16,
-    paddingTop: 50,
-  },
-
-  // ส่วนหัวข้อและปุ่มย้อนกลับ
-  headerContainer: {
-    marginBottom: 16,
-  },
-  backBtn: {
-    marginBottom: 8,
-  },
-  backText: {
-    fontSize: 16,
-    color: colors.dim,
-    fontWeight: '600',
-  },
-
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-
-  // การ์ดยอดขายรวม
-  mainCard: {
-    backgroundColor: colors.card,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 12,
-    alignItems: 'center',
-  },
-  mainLabel: {
-    fontSize: 14,
-    color: colors.dim,
-    marginBottom: 6,
-  },
-  mainValue: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-
-  // แถวสถิติย่อยแบบ 2 คอลัมน์คู่กัน
-  rowStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  summaryCard: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    padding: 16,
-    marginHorizontal: 4,
-  },
-
-  summaryLabel: {
-    fontSize: 13,
-    color: colors.dim,
-    marginBottom: 6,
-  },
-
-  summaryValue: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginTop: 12,
-    marginBottom: 12,
-  },
-
-  // การ์ดรายการอาหาร
-  menuCard: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  menuName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 4,
-  },
-
-  menuDetail: {
-    color: colors.dim,
-    fontSize: 13,
-  },
-
-  menuTotal: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-
-  emptyContainer: {
-    padding: 24,
-    alignItems: 'center',
-  },
-
-  // ประวัติบิลเก่า
-  billRow: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 10,
-    marginBottom: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  billTable: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-  },
-
-  billTime: {
-    flex: 1,
-    fontSize: 13,
-    color: colors.dim,
-    textAlign: 'center',
-  },
-
-  billTotal: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.text,
-    textAlign: 'right',
-    marginRight: 10,
-  },
-
-  viewBill: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-    paddingHorizontal: 4,
-  },
-  topMenuButton: {
-  backgroundColor: colors.card,
-  borderWidth: 1,
-  borderColor: colors.border,
-  borderRadius: 12,
-  paddingVertical: 14,
-  paddingHorizontal: 16,
-  marginTop: 12,
-  marginBottom: 12,
-},
-
-topMenuButtonText: {
-  fontSize: 16,
-  fontWeight: '600',
-  color: colors.text,
-  textAlign: 'center',
-},
+  container: { flex: 1, backgroundColor: colors.bg, padding: 16, paddingTop: 50 },
+  headerContainer: { marginBottom: 16 },
+  backBtn: { marginBottom: 8 },
+  backText: { fontSize: 16, color: colors.dim, fontWeight: '600' },
+  title: { fontSize: 24, fontWeight: 'bold', color: colors.text },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginVertical: 12 },
+  mainCard: { backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: 16, padding: 20, marginBottom: 12, alignItems: 'center' },
+  mainLabel: { fontSize: 14, color: colors.dim, marginBottom: 6 },
+  mainValue: { fontSize: 32, fontWeight: 'bold', color: colors.text },
+  rowStats: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
+  summaryCard: { flex: 1, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, marginHorizontal: 4 },
+  summaryLabel: { fontSize: 13, color: colors.dim, marginBottom: 6 },
+  summaryValue: { fontSize: 22, fontWeight: 'bold', color: colors.text },
+  menuCard: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14, marginBottom: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  menuName: { fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 4 },
+  menuDetail: { color: colors.dim, fontSize: 13 },
+  menuTotal: { fontSize: 16, fontWeight: 'bold', color: colors.text },
+  billRow: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 10, paddingVertical: 14, paddingHorizontal: 10, marginBottom: 8, flexDirection: 'row', alignItems: 'center' },
+  billTable: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.text },
+  billTime: { flex: 1, fontSize: 13, color: colors.dim, textAlign: 'center' },
+  billTotal: { flex: 1, fontSize: 13, fontWeight: '600', color: colors.text, textAlign: 'right', marginRight: 10 },
+  viewBill: { fontSize: 14, fontWeight: '600', color: colors.text, paddingHorizontal: 4 },
+  topMenuButton: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 16, marginVertical: 12 },
+  topMenuButtonText: { fontSize: 16, fontWeight: '600', color: colors.text, textAlign: 'center' },
+  emptyContainer: { padding: 24, alignItems: 'center' },
 });
