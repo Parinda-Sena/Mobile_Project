@@ -4,16 +4,27 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSQLiteContext } from 'expo-sqlite';
 import colors from '../../styles/Theme';
 import { getActiveBillOrders } from '../../database/db';
-function CartScreen({   cart = [],  orders: propsOrders = [],tables_id: propsTableId,
-  tables_number: propsTableNum,onUpdateQuantity,onUpdateNote,onCheckout,onViewReceipt,
-  navigation,route,}) {
+
+function CartScreen({
+  cart = [],
+  orders: propsOrders = [],
+  tables_id: propsTableId,
+  tables_number: propsTableNum,
+  onUpdateQuantity,
+  onUpdateNote,
+  onCheckout,
+  onViewReceipt,
+  navigation,
+  route,
+}) {
   const db = useSQLiteContext();
   const activeTableId = propsTableId ?? route?.params?.tables_id ?? route?.params?.currentTable?.tables_id;
   const activeTableNumber = propsTableNum ?? route?.params?.tables_number ?? route?.params?.currentTable?.tables_number;
   const [activeOrders, setActiveOrders] = useState(propsOrders);
   const [itemNotes, setItemNotes] = useState({});
   const [expandedItemId, setExpandedItemId] = useState(null);
-const fetchActiveOrders = useCallback(async () => {
+
+  const fetchActiveOrders = useCallback(async () => {
     if (!activeTableId || !db) return;
     try {
       const result = await getActiveBillOrders(db, activeTableId);
@@ -24,49 +35,74 @@ const fetchActiveOrders = useCallback(async () => {
       console.error('Failed to fetch active orders:', error);
     }
   }, [db, activeTableId]);
-useFocusEffect(
+
+  useFocusEffect(
     useCallback(() => {
       fetchActiveOrders();
       const timer = setInterval(fetchActiveOrders, 3000);
       return () => clearInterval(timer);
     }, [fetchActiveOrders])
   );
-const displayOrders = activeOrders.length > 0 ? activeOrders : propsOrders;
+
+  const displayOrders = activeOrders.length > 0 ? activeOrders : propsOrders;
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
-const handleNoteChange = (itemId, text) => {
+
+  const handleNoteChange = (itemId, text) => {
     setItemNotes((prev) => ({ ...prev, [itemId]: text }));
     onUpdateNote?.(itemId, text);
   };
-const handleToggleNote = (itemId) => {
+
+  const handleToggleNote = (itemId) => {
     setExpandedItemId((prevId) => (prevId === itemId ? null : itemId));
   };
-const handleGoToReceipt = () => {
+
+  const handleGoToReceipt = (latestOrders) => {
+    const ordersToPass = latestOrders || displayOrders;
     if (onViewReceipt) {
-      onViewReceipt(displayOrders);
+      onViewReceipt(ordersToPass);
     } else if (navigation?.navigate) {
       navigation.navigate('Receipt', {
-        orders: displayOrders,
+        orders: ordersToPass,
         tables_id: activeTableId,
         tables_number: activeTableNumber,
       });
     }
   };
-const handleCheckout = async () => {
+
+  const handleCheckout = async () => {
     if (cart.length === 0) return;
-    const itemsWithNotes = cart.map((item) => {
-      const itemId = item.id ?? item.menu_id ?? item.item_id;
-      return { ...item, note: itemNotes[itemId] ?? item.note ?? '' };
+    
+    // ผูกโน๊ตที่พิมพ์ไว้เข้ากับสินค้าทุกรายการในตะกร้า
+    const itemsWithNotes = cart.map((item, index) => {
+      const itemId = item.id ?? item.menu_id ?? item.item_id ?? index;
+      const finalNote = itemNotes[itemId] ?? item.note ?? '';
+      return { 
+        ...item, 
+        note: finalNote,
+        order_item_note: finalNote
+      };
     });
+
     const newOrder = {
       orderId: `#ORD-${Math.floor(1000 + Math.random() * 9000)}`,
       date: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
       items: itemsWithNotes,
       totalAmount: totalPrice,
     };
+
     if (onCheckout) await onCheckout(newOrder);
+
+    // ล้างโน๊ตใน State ตะกร้าเมื่อทำการสั่งซื้อแล้ว
+    setItemNotes({});
+    setExpandedItemId(null);
+
+    // ดึงข้อมูลคำสั่งซื้ออัปเดตล่าสุดจาก DB
     await fetchActiveOrders();
-    handleGoToReceipt();
+
+    // นำส่งรายการคำสั่งซื้อใหม่รวมทั้งโน๊ตไปยังหน้าใบเสร็จ
+    const updatedOrders = [...displayOrders, newOrder];
+    handleGoToReceipt(updatedOrders);
   };
 
   const renderItemImage = (item) => {
@@ -90,7 +126,7 @@ const handleCheckout = async () => {
       <View style={styles.header}>
         <View style={styles.rowBetween}>
           <Text style={{ fontSize: 32, marginBottom: 4 }}>🛒</Text>
-          <TouchableOpacity style={styles.receiptBtn} onPress={handleGoToReceipt} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.receiptBtn} onPress={() => handleGoToReceipt()} activeOpacity={0.7}>
             <Text style={{ color: '#E65100', fontWeight: '700', fontSize: 13 }}>Order/Receipts</Text>
           </TouchableOpacity>
         </View>
@@ -128,7 +164,7 @@ const handleCheckout = async () => {
                       {item.price} ฿ × {item.quantity} ={' '}
                       <Text style={{ fontWeight: '700', color: colors.cyan }}>{item.price * item.quantity} ฿</Text>
                     </Text>
-                    
+
                     {!isExpanded && (
                       <Text style={styles.addNoteBtnText}>
                         {currentNote ? ` Note: ${currentNote}` : ' Add note...'}
