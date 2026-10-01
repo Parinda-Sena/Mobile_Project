@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from './Theme';
- xport const kitchenStyles = StyleSheet.create({
+ export const kitchenStyles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, padding: 16 },
   list: { flex: 1 },
   backBtn: { height: 45, justifyContent: 'center', paddingHorizontal: 2, paddingTop: 26 },
