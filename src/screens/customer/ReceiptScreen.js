@@ -1,78 +1,119 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSQLiteContext } from 'expo-sqlite';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import colors from '../../styles/Theme';
-import { getActiveBillOrders, closeBillAndCheckout } from '../../database/db'; // นำเข้าฟังก์ชันที่เราเพิ่งสร้าง
+import { getActiveBillOrders, closeBillAndCheckout } from '../../database/db';
+
+const STATUS_CONFIG = {
+  pending: { label: '⏳ รอคิว', color: '#E65100', bgColor: '#FFF3E0' },
+  cooking: { label: '🍳 กำลังปรุง', color: '#0288D1', bgColor: '#E1F5FE' },
+  served: { label: '✅ เสิร์ฟแล้ว', color: '#2E7D32', bgColor: '#E8F5E9' },
+  cancel: { label: '❌ ยกเลิก', color: '#C62828', bgColor: '#FFEBEE' },
+};
 
 function ReceiptScreen(props) {
   const db = useSQLiteContext();
 
+  const navigation = props.navigation;
   const tables_id = props.tables_id ?? props.route?.params?.tables_id;
   const tables_number = props.tables_number ?? props.route?.params?.tables_number;
   const onClearAllOrders = props.onClearAllOrders || props.route?.params?.onClearAllOrders;
-  const onBack = props.onBack;
+
+  const handleBack = props.onBack || props.route?.params?.onBack || (navigation?.canGoBack() ? () => navigation.goBack() : null);
 
   const [billId, setBillId] = useState(null);
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState(props.orders || props.route?.params?.orders || []);
   const [loading, setLoading] = useState(true);
 
-  // โหลดข้อมูลออเดอร์จริงจาก Database เมื่อหน้าจอแสดงขึ้นมา
-  useEffect(() => {
-    async function loadBillData() {
-      if (!tables_id) {
-        setLoading(false);
-        return;
-      }
-      try {
-        setLoading(true);
-        const result = await getActiveBillOrders(db, tables_id);
-        setBillId(result.billId);
-        setOrders(result.orders);
-      } catch (error) {
-        console.error('Failed to load bill orders:', error);
-      } finally {
-        setLoading(false);
-      }
+  const fetchOrders = useCallback(async (isInitial = false) => {
+    if (!tables_id) {
+      if (isInitial) setLoading(false);
+      return;
     }
-    loadBillData();
+    try {
+      if (isInitial && orders.length === 0) setLoading(true);
+      const result = await getActiveBillOrders(db, tables_id);
+
+      if (result) {
+        if (result.billId || result.bill_id) {
+          setBillId(result.billId || result.bill_id);
+        }
+        
+        if (result.orders && Array.isArray(result.orders) && result.orders.length > 0) {
+          const normalizedOrders = result.orders.map((order) => ({
+            ...order,
+            items: (order.items || []).map((item) => ({
+              ...item,
+              status: String(item.order_item_status || item.status || 'pending').toLowerCase(),
+              name: item.name || item.menu_name || 'รายการอาหาร',
+              price: item.price || 0,
+              quantity: item.quantity || 1,
+            })),
+          }));
+
+          setOrders(normalizedOrders);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load bill orders:', error);
+    } finally {
+      if (isInitial) setLoading(false);
+    }
   }, [db, tables_id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchOrders(true);
+      const timer = setInterval(() => {
+        fetchOrders(false);
+      }, 3000);
+
+      return () => clearInterval(timer);
+    }, [fetchOrders])
+  );
 
   const grandTotal = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
 
   const handleClear = () => {
     Alert.alert('Payment successful', 'Do you want to close this bill and clear the table?', [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
+      { text: 'Cancel', style: 'cancel' },
       {
         text: 'OK',
         onPress: async () => {
           try {
-            if (billId) {
-              // ทำการปิดบิลและอัปเดตสถานะโต๊ะใน Database จริง
-              await closeBillAndCheckout(db, billId, tables_id);
+            const targetBillId = billId || orders[0]?.bill_id || orders[0]?.billId;
+
+            if (targetBillId) {
+              await closeBillAndCheckout(db, targetBillId, tables_id);
             }
 
             if (onClearAllOrders) {
               onClearAllOrders();
             }
 
-            if (props.navigation?.navigate) {
-              props.navigation.navigate('Table');
-            } else if (onBack) {
-              onBack();
-            }
+            setTimeout(() => {
+              if (navigation?.navigate) {
+                navigation.navigate('Table', {
+                  currentTable: { tables_id, tables_number },
+                });
+              } else if (handleBack) {
+                handleBack();
+              }
+            }, 100);
+
           } catch (error) {
-            console.error('Check Bill error:', error);
-            Alert.alert('Error', 'ไม่สามารถบันทึกการชำระเงินได้ กรุณาลองใหม่อีกครั้ง');
+            console.error('Check Bill error detail:', error);
+            setTimeout(() => {
+              Alert.alert('Error', `ไม่สามารถปิดบิลได้: ${error.message || 'เกิดข้อผิดพลาด'}`);
+            }, 100);
           }
         },
       },
     ]);
   };
 
-  if (loading) {
+  if (loading && orders.length === 0) {
     return (
       <View style={[styles.container, styles.centerContent]}>
         <ActivityIndicator size="large" color={colors.cyan} />
@@ -83,16 +124,18 @@ function ReceiptScreen(props) {
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        {onBack && (
-          <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-            <Text style={styles.backText}>‹ Back</Text>
+        {handleBack && (
+          <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
+            <Text style={styles.backText}> ‹ Back</Text>
           </TouchableOpacity>
         )}
         <Text style={styles.title}>Receipt {tables_number ? `(Table ${tables_number})` : ''}</Text>
         <Text style={styles.subtitle}>All ordered food items</Text>
       </View>
 
+      {/* Orders List / Empty State */}
       {orders.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>📄</Text>
@@ -101,30 +144,53 @@ function ReceiptScreen(props) {
       ) : (
         <ScrollView style={styles.scrollArea} contentContainerStyle={styles.orderList} showsVerticalScrollIndicator={false}>
           {orders.map((order, index) => (
-            <View key={order.orderId || index} style={styles.orderCard}>
+            <View key={order.orderId || order.order_id || index} style={styles.orderCard}>
               <View style={styles.orderHeader}>
-                <Text style={styles.orderId}>Round {order.round} ({order.orderId})</Text>
-                <Text style={styles.orderDate}>{order.date}</Text>
+                <Text style={styles.orderId}>Round {order.round || index + 1} ({order.orderId || order.order_id || `#${index + 1}`})</Text>
+                <Text style={styles.orderDate}>{order.date || ''}</Text>
               </View>
               <View style={styles.divider} />
-              {order.items?.map((item, itemIdx) => (
-                <View key={itemIdx} style={styles.itemRow}>
-                  <Text style={styles.itemName}>
-                    {item.name} {item.note ? `(${item.note})` : ''} × {item.quantity}
-                  </Text>
-                  <Text style={styles.itemPrice}>{item.price * item.quantity} ฿</Text>
-                </View>
-              ))}
+              
+              {order.items?.map((item, itemIdx) => {
+                const currentStatus = (item.status || 'pending').toLowerCase();
+                const statusCfg = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.pending;
+
+                return (
+                  <View key={item.order_item_id || itemIdx} style={styles.itemContainer}>
+                    <View style={styles.itemRow}>
+                      <Text style={styles.itemName}>
+                        {item.name} × {item.quantity}
+                      </Text>
+                      
+                      <View style={[styles.statusBadge, { backgroundColor: statusCfg.bgColor }]}>
+                        <Text style={[styles.statusBadgeText, { color: statusCfg.color }]}>
+                          {statusCfg.label}
+                        </Text>
+                      </View>
+
+                      <Text style={styles.itemPrice}>{(item.price * item.quantity) || 0} ฿</Text>
+                    </View>
+
+                    {!!item.note && (
+                      <Text style={styles.itemNote}>
+                        📝 {item.note}
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
+
               <View style={styles.divider} />
               <View style={styles.orderTotalRow}>
                 <Text style={styles.orderTotalTitle}>Round Total</Text>
-                <Text style={styles.orderTotalPrice}>{order.totalAmount} ฿</Text>
+                <Text style={styles.orderTotalPrice}>{order.totalAmount || 0} ฿</Text>
               </View>
             </View>
           ))}
         </ScrollView>
       )}
 
+      {/* Footer */}
       {orders.length > 0 && (
         <View style={styles.footer}>
           <View style={styles.grandTotalRow}>
@@ -155,9 +221,13 @@ const styles = StyleSheet.create({
   orderId: { fontSize: 16, fontWeight: '700', color: colors.text },
   orderDate: { fontSize: 13, color: colors.dim },
   divider: { height: 1, backgroundColor: colors.border, marginVertical: 10 },
-  itemRow: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 3 },
-  itemName: { fontSize: 14, color: colors.text, flex: 1, marginRight: 10 },
+  itemContainer: { marginVertical: 6 },
+  itemRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  itemName: { fontSize: 14, fontWeight: '600', color: colors.text, flex: 1 },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+  statusBadgeText: { fontSize: 11, fontWeight: '700' },
   itemPrice: { fontSize: 14, fontWeight: '600', color: colors.text },
+  itemNote: { fontSize: 12, color: '#E65100', marginTop: 2, fontStyle: 'italic', paddingLeft: 4 },
   orderTotalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   orderTotalTitle: { fontSize: 14, fontWeight: '600', color: colors.dim },
   orderTotalPrice: { fontSize: 16, fontWeight: '700', color: colors.cyan },
