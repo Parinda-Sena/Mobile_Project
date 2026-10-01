@@ -31,6 +31,8 @@ const handleResetDatabase = async () => {
       <View style={styles.space} /> 
       <Button title="สรุปยอดขาย" color="#698269" onPress={() => navigation.navigate('SalesSummary')} />
       <View style={styles.space} /> 
+      <Button title="จัดการเมนู" color="#698269" onPress={() => navigation.navigate('MenuManagement')}/>
+      <View style={styles.space} />
       <Button title="ล้างข้อมูลฐานข้อมูล (Reset DB)" color="#d9534f" onPress={handleResetDatabase} /> 
       <StatusBar style="auto" /> 
     </View> 
