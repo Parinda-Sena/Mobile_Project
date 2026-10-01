@@ -61,13 +61,11 @@ export default function HomeScreen({ navigation, route }) {
               <View style={{ flex: 1 }}><Text style={{ fontSize: 14, color: colors.dim }}>{tables_number ? `Table ${tables_number}` : 'Welcome'}</Text><Text style={{ fontSize: 24, fontWeight: '700', color: colors.text }}>What would you like?</Text></View>
               <TouchableOpacity style={S.staffBtn} onPress={() => navigation.navigate('Login', { from: 'Home', currentTable: { tables_id, tables_number } })}><Text style={{ fontSize: 20, color: colors.text }}>☰</Text></TouchableOpacity>
             </View>
-
             <View style={S.searchBox}>
               <Text>🔍 </Text>
               <TextInput style={{ flex: 1, fontSize: 15, color: colors.text }} placeholder="Search..." placeholderTextColor={colors.dim} value={searchQuery} onChangeText={setSearchQuery} />
               {searchQuery.length > 0 && <TouchableOpacity onPress={() => setSearchQuery('')}><Text style={{ color: colors.dim }}>✕</Text></TouchableOpacity>}
             </View>
-
             {searchQuery.trim().length > 0 ? (
               <View style={{ gap: 12 }}>
                 <Text style={S.secTitle}>Search results ({searchResults.length})</Text>
@@ -123,22 +121,12 @@ export default function HomeScreen({ navigation, route }) {
             onCheckout={async (o) => { await createOrder(db, tables_id, cart); setOrders(p => [...p, o]); setCart([]); }} 
             onClearAllOrders={() => { setOrders([]); setActiveTab('home'); }} 
             onViewReceipt={(u) => { 
-              u && setOrders(u); 
-              navigation?.navigate 
-                ? navigation.navigate('Receipt', { orders: u || orders, tables_id, tables_number }) 
-                : setActiveTab('receipt'); 
-            }} 
-            navigation={navigation} 
-          />
+              u && setOrders(u); navigation?.navigate ? navigation.navigate('Receipt', { orders: u || orders, tables_id, tables_number }) 
+                : setActiveTab('receipt'); }} navigation={navigation} />
         )}
         {activeTab === 'receipt' && (
-          <ReceiptScreen 
-            orders={orders} 
-            tables_id={tables_id} 
-            tables_number={tables_number} 
-            onClearAllOrders={() => { setOrders([]); setActiveTab('home'); }} 
-            onBack={() => setActiveTab('cart')} 
-          />
+          <ReceiptScreen orders={orders} tables_id={tables_id} tables_number={tables_number} 
+            onClearAllOrders={() => { setOrders([]); setActiveTab('home'); }} onBack={() => setActiveTab('cart')} />
         )}
       </View>
       <View style={S.tabBar}>
@@ -159,7 +147,6 @@ export default function HomeScreen({ navigation, route }) {
     </View>
   );
 }
-
 const S = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
