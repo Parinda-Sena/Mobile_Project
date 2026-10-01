@@ -11,6 +11,7 @@ import { kitchenStyles } from '../../styles/kitchenStyles';
 const StatusScreen = ({ navigation }) => {
   const db = useSQLiteContext();
   const [orders, setOrders] = useState([]);
+
   const loadOrders = useCallback(async () => {
     try {
       const data = await getOrderItems(db);
@@ -19,6 +20,7 @@ const StatusScreen = ({ navigation }) => {
       console.error('Load status error:', error);
     }
   }, [db]);
+
   useFocusEffect(
     useCallback(() => {
       loadOrders();
@@ -28,6 +30,7 @@ const StatusScreen = ({ navigation }) => {
       return () => clearInterval(timer);
     }, [loadOrders])
   );
+
   const changeStatus = async (itemId, status) => {
     try {
       await updateOrderStatus(db, itemId, status);
@@ -36,12 +39,17 @@ const StatusScreen = ({ navigation }) => {
       console.error('Update status error:', error);
     }
   };
+
   return (
     <View style={kitchenStyles.container}>
-      <TouchableOpacity style={kitchenStyles.backBtn} onPress={() => navigation.navigate('KitchenHome')} activeOpacity={0.7} >
+      <TouchableOpacity style={kitchenStyles.backBtn} onPress={() => navigation.navigate('KitchenHome')} activeOpacity={0.7}>
         <Text style={kitchenStyles.backText}>‹ Back</Text>
       </TouchableOpacity> 
-      <FlatList style={kitchenStyles.list} data={orders} keyExtractor={(item) => item.order_item_id?.toString()}
+
+      <FlatList
+        style={kitchenStyles.list}
+        data={orders}
+        keyExtractor={(item) => item.order_item_id?.toString()}
         renderItem={({ item }) => (
           <OrderCard item={item} showStatus={true}>
             <StatusDropdown value={item.order_item_status} onChange={(status) => changeStatus(item.order_item_id, status)} />
