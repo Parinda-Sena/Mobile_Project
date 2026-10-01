@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import colors from '../../../styles/Theme';
-import { getMenuItemsByCategory } from '../../../database/db';
 
 const MENU_IMAGES = {
   'Shrimp Donut': 'https://www.dailynews.co.th/wp-content/uploads/2022/05/2-1-1.jpg',
@@ -17,20 +16,35 @@ const MENU_IMAGES = {
   'Lasagna': 'https://aroifin.com/wp-content/uploads/2025/12/17122025-lasagna-cover.webp',
 };
 
+const DEFAULT_IMAGE = 'https://via.placeholder.com/150';
+
 function AppetizerScreen({ onBack, onAddToCart }) {
   const db = useSQLiteContext();
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true; 
+    let isMounted = true;
 
     async function fetchMenu() {
       try {
-        const result = await getMenuItemsByCategory(db, 'C004');
+        const result = await db.getAllAsync(
+          `
+          SELECT
+            menu_id,
+            name,
+            price,
+            category_id,
+            available
+          FROM menu
+          WHERE category_id = ?
+          ORDER BY menu_id
+          `,
+          ['C004']
+        );
 
         if (isMounted) {
-          setMenuItems(result);
+          setMenuItems(result || []);
         }
       } catch (error) {
         console.error('Error loading appetizers:', error);
@@ -51,16 +65,17 @@ function AppetizerScreen({ onBack, onAddToCart }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        {onBack && ( 
+        {onBack && (
           <TouchableOpacity onPress={onBack} activeOpacity={0.7} style={styles.backButton}>
-            <Text style={styles.backText}>‹ Back</Text> 
+            <Text style={styles.backText}>‹ Back</Text>
           </TouchableOpacity>
         )}
+
         <Text style={styles.title}>Appetizers</Text>
         <Text style={styles.subtitle}>อาหารเรียกน้ำย่อย</Text>
       </View>
 
-      {loading ? ( 
+      {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.cyan} />
         </View>
@@ -69,20 +84,31 @@ function AppetizerScreen({ onBack, onAddToCart }) {
           {menuItems.map((item) => (
             <View key={item.menu_id} style={styles.menuCard}>
               <View style={styles.imageBox}>
-                <Image source={{ uri: MENU_IMAGES[item.name] || DEFAULT_IMAGE }} 
-                  style={styles.menuImage} resizeMode="cover" />
+                <Image
+                  source={{ uri: MENU_IMAGES[item.name] || DEFAULT_IMAGE }}
+                  style={styles.menuImage}
+                  resizeMode="cover"
+                />
               </View>
+
               <View style={styles.info}>
                 <Text style={styles.menuName}>{item.name}</Text>
                 <Text style={styles.price}>{item.price} ฿</Text>
               </View>
-              <TouchableOpacity 
-                style={styles.addButton} 
-                activeOpacity={0.7} 
-                onPress={() => onAddToCart && onAddToCart(item)}
-              >
-                <Text style={styles.addText}>+</Text>
-              </TouchableOpacity>
+
+              {item.available === 1 ? (
+                <TouchableOpacity
+                  style={styles.addButton}
+                  activeOpacity={0.7}
+                  onPress={() => onAddToCart && onAddToCart(item)}
+                >
+                  <Text style={styles.addText}>+</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.soldOutButton}>
+                  <Text style={styles.soldOutText}>หมด</Text>
+                </View>
+              )}
             </View>
           ))}
         </ScrollView>
@@ -108,6 +134,8 @@ const styles = StyleSheet.create({
   price: { fontSize: 15, fontWeight: '600', color: colors.cyan },
   addButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.cyan, justifyContent: 'center', alignItems: 'center' },
   addText: { color: colors.card, fontSize: 25, fontWeight: '500', lineHeight: 27 },
+  soldOutButton: { width: 50, height: 38, borderRadius: 19, backgroundColor: colors.red, justifyContent: 'center', alignItems: 'center' },
+  soldOutText: { color: colors.card, fontSize: 13, fontWeight: '600' },
 });
 
 export default AppetizerScreen;
