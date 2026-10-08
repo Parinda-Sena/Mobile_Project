@@ -15,11 +15,11 @@
 2. เปิดโฟลเดอร์ด้วย Visual Studio Code
 3. เปิด command prompt
 4. พิมพ์คำสั่งดังต่อไปนี้
-   * `4.1` `d:`
-   * `4.2` `cd Group_2_RestaurantOrder`
-   * `4.3` `npm install expo react react-native expo-status-bar expo-asset expo-sqlite expo-crypto @react-native-picker/picker @react-navigation/native @react-navigation/native-stack @react-native-community/datetimepicker`
-   * `4.4` เปิดแอป Android Studio
-   * `4.5` `npm run android`
+   * 4.1 d:
+   * 4.2` `cd Group_2_RestaurantOrder
+   * 4.3` `npm install expo react react-native expo-status-bar expo-asset expo-sqlite expo-crypto @react-native-picker/picker @react-navigation/native @react-navigation/native-stack @react-native-community/datetimepicker
+   * 4.4 เปิดแอป Android Studio
+   * 4.5 npm run android
 
 ---
 
