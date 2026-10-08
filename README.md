@@ -16,8 +16,8 @@
 3. เปิด command prompt
 4. พิมพ์คำสั่งดังต่อไปนี้
    * 4.1 d:
-   * 4.2` `cd Group_2_RestaurantOrder
-   * 4.3` `npm install expo react react-native expo-status-bar expo-asset expo-sqlite expo-crypto @react-native-picker/picker @react-navigation/native @react-navigation/native-stack @react-native-community/datetimepicker
+   * 4.2 cd Group_2_RestaurantOrder
+   * 4.3 npm install expo react react-native expo-status-bar expo-asset expo-sqlite expo-crypto @react-native-picker/picker @react-navigation/native @react-navigation/native-stack @react-native-community/datetimepicker
    * 4.4 เปิดแอป Android Studio
    * 4.5 npm run android
 
@@ -25,8 +25,8 @@
 
 ### ไลบรารีที่ติดตั้งเพิ่มจากที่เรียนในห้องและหน้าที่การทำงาน
 
-1. **`@react-native-picker/picker`**  
+1. **@react-native-picker/picker**  
    ใช้สร้างคอมโพเนนต์แบบ Dropdown / Select List เพื่อให้ผู้ใช้กดเลือกตัวเลือกต่างๆ ได้ง่าย (เช่น การเลือกเลขโต๊ะอาหาร หรือการเปลี่ยนสถานะออเดอร์ในหน้า Admin)
 
-2. **`@react-native-community/datetimepicker`**  
+2. **@react-native-community/datetimepicker**  
    ใช้สร้างตัวเลือกวันและเวลา (Date & Time Picker) ในหน้าต่างรายงานสรุปยอดขาย เพื่อให้สามารถเลือกช่วงวันที่ต้องการดูรายงานยอดขายได้อย่างสะดวก
