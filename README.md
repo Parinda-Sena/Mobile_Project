@@ -5,7 +5,7 @@
 **สมาชิก 3:** น.ส.อภิณัฐชญา หวังแก้ว 6721601591 เขียนโค้ดหน้าเลือกโต๊ะ หน้าเมนู ตะกร้า และหน้าสรุปบิล  
 
 ### ลิงก์คลิป YouTube : https://youtu.be/xQG8qgnK-0Y?si=PtqjUKGUfKVq5Yr-
-### ลิงก์GitHubtps://github.com/https/Mobile_Project  
+### ลิงก์GitHubtps: //github.com/https/Mobile_Project  
 
 ---
 
