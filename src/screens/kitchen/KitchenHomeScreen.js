@@ -1,7 +1,7 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar'; 
 import { Alert, StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-native'; 
-import { SafeAreaView } from 'react-native-safe-area-context'; // 👈 แก้ไขจุดนี้
+import { SafeAreaView } from 'react-native-safe-area-context'; 
 import { useSQLiteContext } from 'expo-sqlite'; 
 import { resetDatabase } from '../../database/db'; 
 
