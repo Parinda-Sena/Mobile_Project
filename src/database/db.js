@@ -378,7 +378,6 @@ export const createOrder = async (db, tablesId, cart) => {
       for (let index = 0; index < cart.length; index++) {
         const item = cart[index];
 
-        // แก้ไขไวยากรณ์ SQL ที่ผิดพลาดในจุดนี้เรียบร้อยแล้ว
         const menu = await db.getFirstAsync(
           `SELECT menu_id, price, image, available FROM menu WHERE menu_id = ?`,
           [item.menu_id]
