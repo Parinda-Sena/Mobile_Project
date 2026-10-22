@@ -494,20 +494,37 @@ export const getActiveBillOrders = async (db, tablesId) => {
 // เช็คบิล/ปิดบิล
 export const closeBillAndCheckout = async (db, billsId, tablesId) => {
   try {
+    let success = false;
+
     await db.withTransactionAsync(async () => {
-      await db.runAsync(
+      // 1. UPDATE บิล
+      const billRes = await db.runAsync(
         `UPDATE bills SET bills_status = 'closed', closed_at = CURRENT_TIMESTAMP WHERE bills_id = ?`,
         [billsId]
       );
 
-      await db.runAsync(
+      // 2. UPDATE โต๊ะ
+      const tableRes = await db.runAsync(
         `UPDATE tables SET tables_status = 'available' WHERE tables_id = ?`,
         [tablesId]
       );
+
+      // เช็กว่าต้องถูกแก้ไขจริงทั้ง 2 คำสั่ง
+      if (billRes.changes > 0 && tableRes.changes > 0) {
+        success = true;
+      } else {
+        throw new Error('ไม่พบข้อมูลบิลหรือโต๊ะที่ต้องการปิด');
+      }
     });
-    console.log(`Bill ${billsId} closed and Table ${tablesId} is now available`);
+
+    if (success) {
+      console.log(`Bill ${billsId} closed and Table ${tablesId} is now available`);
+      return { ok: true, message: 'ปิดบิลและคืนสถานะโต๊ะเรียบร้อย' };
+    } else {
+      return { ok: false, message: 'ปิดบิลไม่สำเร็จ' };
+    }
   } catch (error) {
     console.error('Error closing bill:', error);
-    throw error;
+    return { ok: false, message: error.message };
   }
 };
